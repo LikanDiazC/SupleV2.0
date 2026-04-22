@@ -5,6 +5,11 @@ import { ContactOrmEntity } from './infrastructure/persistence/orm-entities/Cont
 import { TypeOrmCompanyRepository } from './infrastructure/persistence/TypeOrmCompanyRepository';
 import { TypeOrmContactRepository } from './infrastructure/persistence/TypeOrmContactRepository';
 import { IngestEmailContactUseCase } from './application/use-cases/IngestEmailContactUseCase';
+import { GetContactsUseCase } from './application/use-cases/GetContactsUseCase';
+import { GetCompaniesUseCase } from './application/use-cases/GetCompaniesUseCase';
+import { CrmController } from './presentation/CrmController';
+import { DealOrmEntity } from './infrastructure/persistence/orm-entities/DealOrmEntity';
+import { DealActivityOrmEntity } from './infrastructure/persistence/orm-entities/DealActivityOrmEntity';
 
 @Module({
   imports: [
@@ -14,6 +19,10 @@ import { IngestEmailContactUseCase } from './application/use-cases/IngestEmailCo
     { provide: 'ICompanyRepository', useClass: TypeOrmCompanyRepository },
     { provide: 'IContactRepository', useClass: TypeOrmContactRepository },
     IngestEmailContactUseCase,
+    GetContactsUseCase,
+    GetCompaniesUseCase,
+    DealOrmEntity,          // 👈 NUEVO
+    DealActivityOrmEntity   // 👈 NUEVO
   ],
   exports: [IngestEmailContactUseCase], // 👈 Lo exportamos para que el módulo de comunicaciones lo pueda usar
 })

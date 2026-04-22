@@ -3,7 +3,7 @@ import { TenantId } from '../../../iam/domain/value-objects/TenantId';
 
 export interface ContactProps {
   tenantId: TenantId;
-  companyId: UniqueId; // A qué empresa pertenece
+  companyId?: UniqueId | null; // A qué empresa pertenece
   email: string;       // Ej: "juan.perez@constructora-alfa.com"
   name: string;        // Ej: "Juan Perez"
   createdAt: Date;
@@ -25,7 +25,7 @@ export class Contact {
   // Getters
   get id(): UniqueId { return this._id; }
   get tenantId(): TenantId { return this._props.tenantId; }
-  get companyId(): UniqueId { return this._props.companyId; }
+  get companyId(): UniqueId | null | undefined { return this._props.companyId; }
   get email(): string { return this._props.email; }
   get name(): string { return this._props.name; }
 }

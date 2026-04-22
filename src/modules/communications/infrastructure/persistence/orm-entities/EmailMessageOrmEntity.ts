@@ -41,6 +41,9 @@ export class EmailMessageOrmEntity {
   @Column('uuid', { nullable: true })
   linkedContactId!: string | null; // 👈 Aquí guardaremos el ID de Juan Pérez (el Contacto del CRM)
 
+  @Column('uuid', { nullable: true }) // 👈 NUEVA COLUMNA
+  dealId!: string | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 }

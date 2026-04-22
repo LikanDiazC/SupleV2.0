@@ -47,4 +47,21 @@ export class TypeOrmContactRepository implements IContactRepository {
       name: orm.name,
     }, new UniqueId(orm.id)));
   }
+
+  async findAll(tenantId: string): Promise<Contact[]> {
+    // 💡 Dato: Usamos relations: ['company'] para traer el nombre de la empresa en la misma consulta
+    const ormEntities = await this.ormRepo.find({ 
+      where: { tenantId },
+      relations: ['company'], 
+      order: { name: 'ASC' }
+    });
+    
+    // Convertimos al modelo de dominio (Y fíjate que ya no usamos "as any" gracias a tu corrección)
+    return ormEntities.map(orm => Contact.create({
+      tenantId: new TenantId(orm.tenantId),
+      companyId: orm.companyId ? new UniqueId(orm.companyId) : null,
+      email: orm.email,
+      name: orm.name,
+    }, new UniqueId(orm.id)));
+  }
 }

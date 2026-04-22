@@ -14,6 +14,7 @@ export interface EmailMessageProps {
   receivedAt: Date;
   isProcessed: boolean; // Para saber si ya lo escaneamos para el CRM
   linkedContactId?: UniqueId;
+  dealId?: UniqueId | null;
 }
 
 export class EmailMessage {
@@ -43,9 +44,15 @@ export class EmailMessage {
   get isProcessed(): boolean { return this._props.isProcessed; }
   get userId(): UniqueId { return this._props.userId; }
   get linkedContactId(): UniqueId | undefined { return this._props.linkedContactId; }
+  get dealId(): UniqueId | null | undefined { return this._props.dealId; }
 
   // Comportamientos
 public linkToContact(contactId: UniqueId): void {
     this._props.linkedContactId = contactId;
   }
+
+  public linkToDeal(dealId: UniqueId): void { // 👈 NUEVO MÉTODO
+    this._props.dealId = dealId;
+  }
+
 }
