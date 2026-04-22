@@ -1,0 +1,22 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm'; // 👈 Nuevo
+import { CommsController } from './presentation/CommsController';
+import { GoogleMailService } from './infrastructure/google/GoogleMailService';
+import { CrmModule } from '../crm/crm.module';
+import { EmailMessageOrmEntity } from './infrastructure/persistence/orm-entities/EmailMessageOrmEntity'; // 👈 Nuevo
+import { TypeOrmEmailRepository } from './infrastructure/persistence/TypeOrmEmailRepository'; // 👈 Nuevo
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([EmailMessageOrmEntity]), // 👈 Para que cree la tabla
+    CrmModule
+  ],
+  controllers: [CommsController],
+  providers: [
+    GoogleMailService,
+    // Registramos el repositorio para poder inyectarlo
+    { provide: 'IEmailRepository', useClass: TypeOrmEmailRepository } 
+  ],
+  exports: [GoogleMailService],
+})
+export class CommunicationsModule {}
