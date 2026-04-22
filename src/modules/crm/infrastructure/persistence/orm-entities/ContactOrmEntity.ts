@@ -18,6 +18,9 @@ export class ContactOrmEntity {
   @Column()
   name!: string;
 
+  @Column('varchar', { length: 100, nullable: true }) // 👈 NUEVA COLUMNA
+  personality!: string | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 
