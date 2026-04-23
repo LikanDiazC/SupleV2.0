@@ -6,13 +6,14 @@ import { CrmModule } from '../crm/crm.module';
 import { EmailMessageOrmEntity } from './infrastructure/persistence/orm-entities/EmailMessageOrmEntity'; // 👈 Nuevo
 import { TypeOrmEmailRepository } from './infrastructure/persistence/TypeOrmEmailRepository'; // 👈 Nuevo
 import { AiSummarizerService } from './infrastructure/ai/AiSummarizerService';
+import { AiChatController } from './presentation/AiChatController';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([EmailMessageOrmEntity]), // 👈 Para que cree la tabla
     CrmModule
   ],
-  controllers: [CommsController],
+  controllers: [CommsController,AiChatController],
   providers: [
     GoogleMailService,
     AiSummarizerService,
