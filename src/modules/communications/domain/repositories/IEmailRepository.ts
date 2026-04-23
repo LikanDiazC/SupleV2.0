@@ -4,4 +4,5 @@ export interface IEmailRepository {
   save(email: EmailMessage): Promise<void>;
   findByExternalId(externalMessageId: string): Promise<EmailMessage | null>;
   findUnprocessed(tenantId: string): Promise<EmailMessage[]>; // Los que el CRM aún no lee
+  findAll(tenantId: string): Promise<EmailMessage[]>;
 }

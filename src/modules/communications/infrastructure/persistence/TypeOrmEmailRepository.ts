@@ -7,6 +7,7 @@ import type { IEmailRepository } from '../../domain/repositories/IEmailRepositor
 import { UniqueId } from '../../../../shared/kernel/UniqueId';
 import { TenantId } from '../../../iam/domain/value-objects/TenantId';
 
+
 @Injectable()
 export class TypeOrmEmailRepository implements IEmailRepository {
   constructor(
@@ -57,8 +58,29 @@ export class TypeOrmEmailRepository implements IEmailRepository {
     return email;
   }
 
+async findAll(tenantId: string): Promise<EmailMessage[]> {
+    const ormEntities = await this.ormRepo.find({
+      where: { tenantId },
+      order: { receivedAt: 'DESC' }
+    });
+    
+    return ormEntities.map(orm => EmailMessage.create({
+      tenantId: new TenantId(orm.tenantId),
+      userId: new UniqueId(orm.userId),
+      externalMessageId: orm.externalMessageId,
+      threadId: orm.threadId || '',
+      sender: orm.sender,
+      recipient: orm.recipient || '',
+      subject: orm.subject,
+      bodySnippet: orm.bodySnippet,
+      bodyHtml: orm.bodyHtml || '',
+      receivedAt: orm.receivedAt,
+      isProcessed: orm.isProcessed,
+    }, new UniqueId(orm.id)));
+  }
+
+  // 👇 Y esta es la función vacía para que no se queje la interfaz
   async findUnprocessed(tenantId: string): Promise<EmailMessage[]> {
-    // Por ahora retornamos vacío para cumplir el contrato, lo implementaremos luego
     return [];
   }
-}
+} // <-- Esta es la última llave que cierra toda la clase

@@ -36,5 +36,22 @@ export class AiSummarizerService {
       return 'No se pudo generar el resumen automático.';
     }
   }
+
+  async askAssistant(message: string): Promise<string> {
+    try {
+      const model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      
+      // Aquí le damos su "personalidad"
+      const prompt = `Eres el asistente inteligente de un ERP corporativo llamado "Suple". 
+      Responde de forma ejecutiva, breve y amable a lo que te pregunte el usuario.
+      Mensaje del usuario: "${message}"`;
+
+      const result = await model.generateContent(prompt);
+      return result.response.text();
+    } catch (error: any) {
+      console.error('❌ Error IA Chat:', error.message);
+      return 'Lo siento, tuve un pequeño cortocircuito en mis servidores. ¿Puedes intentar de nuevo?';
+    }
+  }
 }
 

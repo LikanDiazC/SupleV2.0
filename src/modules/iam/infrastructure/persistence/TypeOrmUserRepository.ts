@@ -38,11 +38,18 @@ export class TypeOrmUserRepository implements IUserRepository {
   }
 
   // Busca por Email
-  async findByEmail(email: string): Promise<User | null> {
-    const ormEntity = await this.ormRepository.findOne({ where: { email } });
+async findByEmail(email: string): Promise<User | null> {
+    // 💡 Le decimos a TypeORM que traiga la relación 'tenant'
+    const ormEntity = await this.ormRepository.findOne({ 
+      where: { email },
+      relations: ['tenant'] 
+    });
+    
     if (!ormEntity) return null;
     return this.mapToDomain(ormEntity);
   }
+
+  
   // Busca por TenantId
   async findByTenantId(tenantId: TenantId): Promise<User[]> {
     const ormEntities = await this.ormRepository.find({ 
@@ -62,6 +69,7 @@ async findAll(tenantId?: string): Promise<User[]> {
   }
 
   // Traductor: de la BD al Dominio
+ // Traductor: de la BD al Dominio
   private mapToDomain(ormEntity: UserOrmEntity): User {
     return User.create(
       {
@@ -71,6 +79,7 @@ async findAll(tenantId?: string): Promise<User[]> {
         lastName: ormEntity.lastName,
         isActive: ormEntity.isActive,
         tenantId: new TenantId(ormEntity.tenantId),
+        tenantName: ormEntity.tenant?.name, // 👈 Aquí cargamos el nombre de la empresa
         role: ormEntity.role,
       },
       new UniqueId(ormEntity.id),

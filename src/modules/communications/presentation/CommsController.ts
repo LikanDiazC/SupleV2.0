@@ -89,6 +89,13 @@ export class CommsController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('emails')
+    async getEmails(@Req() request: Request) {
+      const userPayload = request['user'] as any;
+      return await this.emailRepo.findAll(userPayload.tenantId);
+    }
+
   // 👇 LÓGICA CENTRALIZADA PARA PROCESAR CORREOS
   private async processEmails(emails: any[], tenantId: string, userId: string) {
     let guardados = 0;

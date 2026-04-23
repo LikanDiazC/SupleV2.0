@@ -10,7 +10,8 @@ export interface UserProps {
   lastName: string;
   isActive: boolean;
   tenantId: TenantId;
-  role: string; // Por ahora lo dejamos como string, pero podríamos crear un Value Object o una Enum para esto
+  role: string;
+  tenantName?: string; // Por ahora lo dejamos como string, pero podríamos crear un Value Object o una Enum para esto
   // (Más adelante conectaremos el Rol y el Tenant aquí)
 }
 
@@ -30,6 +31,7 @@ export class User extends Entity<UserProps> {
   get isActive(): boolean { return this.props.isActive; }
   get tenantId(): TenantId { return this.props.tenantId; }
   get role(): string { return this.props.role; }
+  get tenantName(): string | undefined { return this.props.tenantName; }
 
   // 4. Factory Method: La ÚNICA forma oficial de crear un Usuario en el sistema
   public static create(props: UserProps, id?: UniqueId): User {

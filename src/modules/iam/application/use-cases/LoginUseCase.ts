@@ -10,6 +10,7 @@ export class LoginUseCase {
     @Inject('IUserRepository')
     private readonly userRepository: IUserRepository,
     private readonly jwtService: JwtService,
+    
   ) {}
 
   async execute(dto: LoginDto) {
@@ -31,18 +32,28 @@ export class LoginUseCase {
         throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    const payload = { 
-      sub: user.id.value, // "sub" significa Subject (Sujeto), es una regla estándar de JWT
+const payload = { 
+      sub: user.id.value, 
       tenantId: user.tenantId.value, 
-      role: user.role
+      tenantName: user.tenantName, // 👈 ¡ESTA ES LA CLAVE!
+      role: user.role,
+      email: user.email, 
+      name: `${user.firstName} ${user.lastName}` 
     };
-    // Aquí es donde generamos el token JWT con la información del usuario
+
     const accessToken = await this.jwtService.signAsync(payload);
 
-    // 4. Si la contraseña coincide, le damos acceso
     return {
       message: '¡Inicio de sesión exitoso!',
-      accessToken: accessToken
+      accessToken: accessToken,
+      user: {
+        id: payload.sub,
+        tenantId: payload.tenantId,
+        tenantName: payload.tenantName, // 👈 También lo incluimos aquí
+        role: payload.role,
+        email: payload.email,
+        name: payload.name
+      }
     };
   }
 }
