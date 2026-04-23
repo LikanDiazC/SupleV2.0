@@ -24,6 +24,11 @@ export class TypeOrmDealRepository implements IDealRepository {
       companyId: deal.companyId ? deal.companyId.value : null,
       contactId: deal.contactId ? deal.contactId.value : null,
       assignedUserId: deal.assignedUserId.value,
+      // 👇 NUEVO: Transformamos los items al guardarlos
+      items: deal.items.map(i => ({
+        productId: i.productId.value,
+        quantity: i.quantity,
+      })),
       createdAt: deal.createdAt,
       updatedAt: deal.updatedAt,
     });
@@ -41,6 +46,14 @@ export class TypeOrmDealRepository implements IDealRepository {
     return orms.map(orm => this.mapToDomain(orm));
   }
 
+  async findByContact(contactId: string, tenantId: string): Promise<Deal[]> {
+    const orms = await this.ormRepo.find({ 
+      where: { contactId, tenantId }, 
+      order: { updatedAt: 'DESC' } 
+    });
+    return orms.map(orm => this.mapToDomain(orm));
+  }
+
   private mapToDomain(orm: DealOrmEntity): Deal {
     return Deal.load({
       tenantId: new TenantId(orm.tenantId),
@@ -50,6 +63,11 @@ export class TypeOrmDealRepository implements IDealRepository {
       companyId: orm.companyId ? new UniqueId(orm.companyId) : null,
       contactId: orm.contactId ? new UniqueId(orm.contactId) : null,
       assignedUserId: new UniqueId(orm.assignedUserId),
+      // 👇 NUEVO: Reconstruimos los items al sacarlos de la base de datos
+      items: (orm.items || []).map((i: any) => ({
+        productId: new UniqueId(i.productId),
+        quantity: i.quantity,
+      })),
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
     }, new UniqueId(orm.id));

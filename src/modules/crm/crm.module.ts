@@ -18,9 +18,12 @@ import { CreateDealUseCase } from './application/use-cases/CreateDealUseCase';
 import { GetDealsUseCase } from './application/use-cases/GetDealsUseCase';
 import { MoveDealStageUseCase } from './application/use-cases/MoveDealStageUseCase';
 import { AddDealActivityUseCase } from './application/use-cases/AddDealActivityUseCase';
+// 👇 1. ASEGÚRATE DE IMPORTARLO AQUÍ ARRIBA
+import { GetActiveDealForContactUseCase } from './application/use-cases/GetActiveDealForContactUseCase'; 
 
 import { CrmController } from './presentation/CrmController';
 import { DealsController } from './presentation/DealsController';
+import { OrdersModule } from '../orders/orders.module';
 
 @Module({
   imports: [
@@ -30,6 +33,7 @@ import { DealsController } from './presentation/DealsController';
       DealOrmEntity,          
       DealActivityOrmEntity   
     ]), 
+    OrdersModule,
   ],
   controllers: [CrmController, DealsController],
   providers: [
@@ -44,7 +48,12 @@ import { DealsController } from './presentation/DealsController';
     GetDealsUseCase,
     MoveDealStageUseCase,
     AddDealActivityUseCase,
+    GetActiveDealForContactUseCase, // 👈 2. FALTABA AGREGARLO AQUÍ EN LOS PROVIDERS
   ],
-  exports: [IngestEmailContactUseCase], 
+  exports: [
+    IngestEmailContactUseCase, 
+    GetActiveDealForContactUseCase, // Y LO EXPORTAMOS AQUÍ
+    AddDealActivityUseCase
+  ], 
 })
 export class CrmModule {}

@@ -16,7 +16,7 @@ export class GetContactsUseCase {
       id: c.id.value,
       name: c.name,
       email: c.email,
-      companyId: c.companyId ? c.companyId.value : null
+      companyId: c.companyId ? c.companyId.value : null,
       personality: c.personality
     }));
   }

@@ -26,6 +26,9 @@ export class DealOrmEntity {
   @Column('uuid')
   assignedUserId!: string;
 
+  @Column('jsonb', { default: [] })
+  items!: any[];
+
   @CreateDateColumn()
   createdAt!: Date;
 

@@ -7,6 +7,7 @@ import type { IContactRepository } from '../../domain/repositories/IContactRepos
 import { UniqueId } from '../../../../shared/kernel/UniqueId';
 import { TenantId } from '../../../iam/domain/value-objects/TenantId';
 
+
 @Injectable()
 export class TypeOrmContactRepository implements IContactRepository {
   constructor(
@@ -21,6 +22,7 @@ export class TypeOrmContactRepository implements IContactRepository {
       companyId: contact.companyId ? contact.companyId.value : null,
       email: contact.email,
       name: contact.name,
+      personality: contact.personality || null,
       createdAt: contact['createdAt'] || new Date(),
     });
     await this.ormRepo.save(ormEntity);
@@ -35,6 +37,7 @@ export class TypeOrmContactRepository implements IContactRepository {
       companyId: ormEntity.companyId ? new UniqueId(ormEntity.companyId) : null as any,
       email: ormEntity.email,
       name: ormEntity.name,
+      personality: ormEntity.personality,
     }, new UniqueId(ormEntity.id));
   }
 
@@ -45,6 +48,7 @@ export class TypeOrmContactRepository implements IContactRepository {
       companyId: orm.companyId ? new UniqueId(orm.companyId) : null as any,
       email: orm.email,
       name: orm.name,
+      personality: orm.personality,
     }, new UniqueId(orm.id)));
   }
 
@@ -62,6 +66,7 @@ export class TypeOrmContactRepository implements IContactRepository {
       companyId: orm.companyId ? new UniqueId(orm.companyId) : null,
       email: orm.email,
       name: orm.name,
+      personality: orm.personality,
     }, new UniqueId(orm.id)));
   }
 }

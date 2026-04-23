@@ -6,11 +6,18 @@ import { DealActivity } from '../../domain/entities/DealActivity';
 import { UniqueId } from '../../../../shared/kernel/UniqueId';
 import { TenantId } from '../../../iam/domain/value-objects/TenantId';
 
+// 👇 NUEVO DTO
+export class CreateDealItemDto {
+  productId!: string;
+  quantity!: number;
+}
+
 export class CreateDealDto {
   name!: string;
   amount!: number;
   companyId?: string;
   contactId?: string;
+  items?: CreateDealItemDto[]; // 👈 Puede venir con o sin carrito
 }
 
 @Injectable()
@@ -22,17 +29,20 @@ export class CreateDealUseCase {
 
   async execute(tenantId: string, userId: string, dto: CreateDealDto): Promise<string> {
     try {
-      // 1. Creamos la carpeta del negocio (Nace en estado NUEVO)
       const deal = Deal.create({
         tenantId: new TenantId(tenantId),
         name: dto.name,
         amount: dto.amount,
         companyId: dto.companyId ? new UniqueId(dto.companyId) : null,
         contactId: dto.contactId ? new UniqueId(dto.contactId) : null,
-        assignedUserId: new UniqueId(userId), // Se asigna automáticamente al que lo crea
+        assignedUserId: new UniqueId(userId),
+        // 👇 Mapeamos el carrito si lo enviaron
+        items: dto.items ? dto.items.map(i => ({
+          productId: new UniqueId(i.productId),
+          quantity: i.quantity
+        })) : [],
       });
 
-      // 2. Creamos la primera actividad (El registro de que alguien lo creó)
       const initialActivity = DealActivity.create({
         tenantId: new TenantId(tenantId),
         dealId: deal.id,
@@ -41,7 +51,6 @@ export class CreateDealUseCase {
         content: `Negocio creado y asignado. Monto inicial: $${dto.amount}`,
       });
 
-      // 3. Guardamos ambos en la base de datos
       await this.dealRepo.save(deal);
       await this.activityRepo.save(initialActivity);
 

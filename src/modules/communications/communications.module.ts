@@ -5,6 +5,7 @@ import { GoogleMailService } from './infrastructure/google/GoogleMailService';
 import { CrmModule } from '../crm/crm.module';
 import { EmailMessageOrmEntity } from './infrastructure/persistence/orm-entities/EmailMessageOrmEntity'; // 👈 Nuevo
 import { TypeOrmEmailRepository } from './infrastructure/persistence/TypeOrmEmailRepository'; // 👈 Nuevo
+import { AiSummarizerService } from './infrastructure/ai/AiSummarizerService';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { TypeOrmEmailRepository } from './infrastructure/persistence/TypeOrmEmai
   controllers: [CommsController],
   providers: [
     GoogleMailService,
+    AiSummarizerService,
     // Registramos el repositorio para poder inyectarlo
     { provide: 'IEmailRepository', useClass: TypeOrmEmailRepository } 
   ],

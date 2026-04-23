@@ -3,14 +3,21 @@ import { TenantId } from '../../../iam/domain/value-objects/TenantId';
 
 export type DealStage = 'NUEVO' | 'REUNION_AGENDADA' | 'PROPUESTA_ENVIADA' | 'GANADO' | 'PERDIDO';
 
+// 👇 NUEVO: Definimos qué es un "Item" dentro de una venta
+export interface DealItem {
+  productId: UniqueId;
+  quantity: number;
+}
+
 export interface DealProps {
   tenantId: TenantId;
-  name: string;             // Ej: "Venta 50 Sillas"
-  amount: number;           // Ej: 5000000 (Monto del negocio)
+  name: string;             
+  amount: number;           
   stage: DealStage;
-  companyId?: UniqueId | null; // Empresa (Opcional)
-  contactId?: UniqueId | null; // Persona (Opcional)
-  assignedUserId: UniqueId;    // Vendedor a cargo
+  companyId?: UniqueId | null; 
+  contactId?: UniqueId | null; 
+  assignedUserId: UniqueId;    
+  items: DealItem[]; // 👈 NUEVO: El "carrito de compras" del negocio
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,7 +31,8 @@ export class Deal {
   public static create(props: Omit<DealProps, 'createdAt' | 'updatedAt' | 'stage'>, id?: UniqueId): Deal {
     return new Deal(id ?? new UniqueId(), {
       ...props,
-      stage: 'NUEVO', // Todo trato nace en la primera columna del Kanban
+      items: props.items || [], // Si no mandan productos, inicia vacío
+      stage: 'NUEVO', 
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -42,6 +50,7 @@ export class Deal {
   get companyId() { return this._props.companyId; }
   get contactId() { return this._props.contactId; }
   get assignedUserId() { return this._props.assignedUserId; }
+  get items() { return this._props.items; } // 👈 NUEVO
   get createdAt() { return this._props.createdAt; }
   get updatedAt() { return this._props.updatedAt; }
 
