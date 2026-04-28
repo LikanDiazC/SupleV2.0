@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Req, UseGuards, Param, Patch, Get } from '@nestjs/common';
+import { Controller, Post, Body, Req, UseGuards, Param, Patch, Get, Query, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../iam/infrastructure/guards/JwtAuthGuard';
 import { CreateDealUseCase, CreateDealDto } from '../application/use-cases/CreateDealUseCase';
@@ -26,9 +26,13 @@ export class DealsController {
   }
 
   @Get()
-  async getDeals(@Req() request: Request) {
+  async getDeals(
+    @Req() request: Request,
+    @Query('limit', new DefaultValuePipe(200), ParseIntPipe) limit?: number,
+    @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset?: number,
+  ) {
     const user = request['user'] as any;
-    return await this.getDealsUseCase.execute(user.tenantId);
+    return await this.getDealsUseCase.execute(user.tenantId, limit, offset);
   }
 
   @Patch(':id/stage')

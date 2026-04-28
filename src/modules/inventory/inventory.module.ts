@@ -1,39 +1,67 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ItemOrmEntity } from './infrastructure/persistence/ItemOrmEntity';
-import { TypeOrmItemRepository } from './infrastructure/persistence/TypeOrmItemRepository';
-import { InventoryController } from './presentation/InventoryController';
-import { CreateItemUseCase } from './application/use-cases/CreateItemUseCase';
-import { GetItemsUseCase } from './application/use-cases/GetItemsUseCase';
-import { ConsumeItemStockUseCase } from './application/use-cases/ConsumeItemStockUseCase';
-import { ReceiveItemStockUseCase } from './application/use-cases/ReceiveItemStockUseCase';
+
+// ─── Movements ────────────────────────────────────────────────────────────────
 import { InventoryMovementOrmEntity } from './infrastructure/persistence/InventoryMovementOrmEntity';
 import { TypeOrmInventoryMovementRepository } from './infrastructure/persistence/TypeOrmInventoryMovementRepository';
-import { GetItemMovementsUseCase } from './application/use-cases/GetItemMovementsUseCase';
+
+// ─── Materials ────────────────────────────────────────────────────────────────
+import { MaterialOrmEntity } from './infrastructure/persistence/MaterialOrmEntity';
+import { TypeOrmMaterialRepository } from './infrastructure/repositories/TypeOrmMaterialRepository';
+import { MaterialController } from './presentation/MaterialController';
+import { CreateMaterialUseCase } from './application/use-cases/CreateMaterialUseCase';
+import { GetMaterialsUseCase } from './application/use-cases/GetMaterialsUseCase';
+import { AddMaterialStockUseCase } from './application/use-cases/AddMaterialStockUseCase';
+import { ConsumeMaterialStockUseCase } from './application/use-cases/ConsumeMaterialStockUseCase';
+import { GetRemnantsUseCase } from './application/use-cases/GetRemnantsUseCase';
+
+// ─── Products ─────────────────────────────────────────────────────────────────
+import { ProductOrmEntity } from './infrastructure/persistence/ProductOrmEntity';
+import { TypeOrmProductRepository } from './infrastructure/repositories/TypeOrmProductRepository';
+import { ProductController } from './presentation/ProductController';
+import { CreateProductUseCase } from './application/use-cases/CreateProductUseCase';
+import { GetProductsUseCase } from './application/use-cases/GetProductsUseCase';
+
+// ─── Remnants ─────────────────────────────────────────────────────────────────
+import { RemnantOrmEntity } from './infrastructure/persistence/RemnantOrmEntity';
+import { TypeOrmRemnantRepository } from './infrastructure/repositories/TypeOrmRemnantRepository';
 
 @Module({
-  // 1. Le presentamos nuestra tabla a TypeORM
-  imports: [TypeOrmModule.forFeature([ItemOrmEntity, InventoryMovementOrmEntity])],
-  
-  // 2. Registramos nuestros Traductores y Casos de Uso (Proveedores)
-  providers: [
-    {
-      provide: 'IItemRepository',
-      useClass: TypeOrmItemRepository,
-    },
-    {
-      provide: 'IInventoryMovementRepository',
-      useClass: TypeOrmInventoryMovementRepository,
-    },
-    CreateItemUseCase,
-    GetItemsUseCase,
-    ConsumeItemStockUseCase,
-    ReceiveItemStockUseCase,
-    GetItemMovementsUseCase,
+  imports: [
+    TypeOrmModule.forFeature([
+      InventoryMovementOrmEntity,
+      MaterialOrmEntity,
+      ProductOrmEntity,
+      RemnantOrmEntity,
+    ]),
   ],
-  
-  // 3. (Opcional por ahora) Controladores que reciban peticiones HTTP
-  controllers: [InventoryController], 
-  exports: ['IItemRepository', 'IInventoryMovementRepository'], // Exportamos los repositorios para que otros módulos puedan usarlos
+  providers: [
+    // Repositories
+    { provide: 'IInventoryMovementRepository', useClass: TypeOrmInventoryMovementRepository },
+    { provide: 'IMaterialRepository',          useClass: TypeOrmMaterialRepository },
+    { provide: 'IProductRepository',           useClass: TypeOrmProductRepository },
+    { provide: 'IRemnantRepository',           useClass: TypeOrmRemnantRepository },
+
+    // Material use cases
+    CreateMaterialUseCase,
+    GetMaterialsUseCase,
+    AddMaterialStockUseCase,
+    ConsumeMaterialStockUseCase,
+    GetRemnantsUseCase,
+
+    // Product use cases
+    CreateProductUseCase,
+    GetProductsUseCase,
+  ],
+  controllers: [
+    MaterialController,
+    ProductController,
+  ],
+  exports: [
+    'IInventoryMovementRepository',
+    'IMaterialRepository',
+    'IProductRepository',
+    'IRemnantRepository',
+  ],
 })
 export class InventoryModule {}

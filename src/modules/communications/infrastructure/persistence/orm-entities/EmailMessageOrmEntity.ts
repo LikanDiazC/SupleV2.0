@@ -1,10 +1,11 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, CreateDateColumn, Index } from 'typeorm';
 
 @Entity('comms_email_messages')
 export class EmailMessageOrmEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
+  @Index()
   @Column('uuid')
   tenantId!: string;
 

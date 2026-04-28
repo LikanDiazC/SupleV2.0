@@ -25,6 +25,16 @@ export class TypeOrmCompanyRepository implements ICompanyRepository {
     await this.ormRepo.save(ormEntity);
   }
 
+  async findById(id: string, tenantId: string): Promise<Company | null> {
+    const orm = await this.ormRepo.findOne({ where: { id, tenantId } });
+    if (!orm) return null;
+    return Company.create({
+      tenantId: new TenantId(orm.tenantId),
+      domain: orm.domain,
+      name: orm.name,
+    }, new UniqueId(orm.id));
+  }
+
   async findByDomain(domain: string, tenantId: string): Promise<Company | null> {
     const ormEntity = await this.ormRepo.findOne({ where: { domain, tenantId } });
     if (!ormEntity) return null;

@@ -26,7 +26,7 @@ export class TypeOrmDealRepository implements IDealRepository {
       assignedUserId: deal.assignedUserId.value,
       // 👇 NUEVO: Transformamos los items al guardarlos
       items: deal.items.map(i => ({
-        productId: i.productId.value,
+        bomId:    i.bomId.value,
         quantity: i.quantity,
       })),
       createdAt: deal.createdAt,
@@ -41,8 +41,8 @@ export class TypeOrmDealRepository implements IDealRepository {
     return this.mapToDomain(orm);
   }
 
-  async findAll(tenantId: string): Promise<Deal[]> {
-    const orms = await this.ormRepo.find({ where: { tenantId }, order: { updatedAt: 'DESC' } });
+  async findAll(tenantId: string, limit = 200, offset = 0): Promise<Deal[]> {
+    const orms = await this.ormRepo.find({ where: { tenantId }, order: { updatedAt: 'DESC' }, take: limit, skip: offset });
     return orms.map(orm => this.mapToDomain(orm));
   }
 
@@ -65,7 +65,7 @@ export class TypeOrmDealRepository implements IDealRepository {
       assignedUserId: new UniqueId(orm.assignedUserId),
       // 👇 NUEVO: Reconstruimos los items al sacarlos de la base de datos
       items: (orm.items || []).map((i: any) => ({
-        productId: new UniqueId(i.productId),
+        bomId:    new UniqueId(i.bomId),
         quantity: i.quantity,
       })),
       createdAt: orm.createdAt,

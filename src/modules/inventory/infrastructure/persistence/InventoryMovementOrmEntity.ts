@@ -1,31 +1,33 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, CreateDateColumn , Index } from 'typeorm';
 
-@Entity('inventory_movements') // Este será el nombre de la tabla en Postgres
+@Entity('inventory_movements')
 export class InventoryMovementOrmEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
+  @Index()
   @Column('uuid')
   tenantId!: string;
 
   @Column('uuid')
-  itemId!: string;
+  itemId!: string; // UUID de la entidad movida (material, product o remnant)
 
   @Column('uuid')
   userId!: string;
 
-  // Guardaremos 'IN' (Entrada) u 'OUT' (Salida)
   @Column({ type: 'varchar', length: 10 })
-  type!: string; 
+  type!: string; // IN | OUT
 
-  // Usamos 'numeric' por si en el futuro la madera se mide en metros (ej: 2.5 metros)
   @Column('numeric', { precision: 10, scale: 2 })
   quantity!: number;
 
   @Column('varchar')
   reason!: string;
 
-  // TypeORM llenará este campo automáticamente con la fecha y hora exacta
+  // Discriminador: qué tabla referencia itemId
+  @Column({ type: 'varchar', length: 20, nullable: true, default: 'ITEM' })
+  entityType?: string; // MATERIAL | PRODUCT | REMNANT | ITEM (legacy)
+
   @CreateDateColumn()
   createdAt!: Date;
 }

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Req, UseGuards, Param, Patch, Get } from '@nestjs/common';
+import { Controller, Post, Body, Req, UseGuards, Param, Patch, Get, Query, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../iam/infrastructure/guards/JwtAuthGuard';
 import { ReceiveExternalOrderUseCase, ExternalOrderDto } from '../application/use-cases/ReceiveExternalOrderUseCase';
@@ -26,10 +26,14 @@ export class OrdersController {
   ) {}
 
   @UseGuards(JwtAuthGuard)
-  @Get() // URL: http://localhost:3000/orders
-  async getAllOrders(@Req() request: Request) {
+  @Get()
+  async getAllOrders(
+    @Req() request: Request,
+    @Query('limit', new DefaultValuePipe(200), ParseIntPipe) limit?: number,
+    @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset?: number,
+  ) {
     const userPayload = request['user'] as any;
-    return await this.getOrdersUseCase.execute(userPayload.tenantId);
+    return await this.getOrdersUseCase.execute(userPayload.tenantId, limit, offset);
   }
 
   // 👇 RUTA PARA OBTENER UNA ORDEN ESPECÍFICA
@@ -46,12 +50,13 @@ export class OrdersController {
   async receiveOrder(@Body() dto: ExternalOrderDto, @Req() request: Request) {
     const userPayload = request['user'] as any;
     
-    await this.receiveExternalOrderUseCase.execute(userPayload.tenantId, dto);
-    
-    return { 
-      message: 'Orden recibida exitosamente.',
-      status: 'ORDER_RECEIVED',
-      reference: dto.externalReference
+    const result = await this.receiveExternalOrderUseCase.execute(userPayload.tenantId, dto);
+
+    return {
+      message: 'Orden recibida y stock verificado automáticamente.',
+      id:        result.id,
+      status:    result.status,
+      reference: dto.externalReference,
     };
   }
 

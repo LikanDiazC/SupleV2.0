@@ -35,6 +35,19 @@ export class TypeOrmBillOfMaterialsRepository implements IBillOfMaterialsReposit
   }
   // ... (debajo del método save)
 
+  async findById(id: string, tenantId: string): Promise<BillOfMaterials | null> {
+    const ormEntity = await this.ormRepository.findOne({ where: { id, tenantId } });
+    if (!ormEntity) return null;
+    return BillOfMaterials.load({
+      tenantId:   new TenantId(ormEntity.tenantId),
+      productId:  new UniqueId(ormEntity.productId),
+      name:       ormEntity.name,
+      components: ormEntity.components.map((c: any) => ({ itemId: new UniqueId(c.itemId), quantity: c.quantity })),
+      createdAt:  ormEntity.createdAt,
+      updatedAt:  ormEntity.updatedAt,
+    }, new UniqueId(ormEntity.id));
+  }
+
   async findByProductId(productId: string, tenantId: string): Promise<BillOfMaterials | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { productId: productId, tenantId: tenantId },
@@ -56,5 +69,27 @@ export class TypeOrmBillOfMaterialsRepository implements IBillOfMaterialsReposit
       createdAt: ormEntity.createdAt,
       updatedAt: ormEntity.updatedAt,
     }, new UniqueId(ormEntity.id));
+  }
+
+  async delete(id: string, tenantId: string): Promise<void> {
+    await this.ormRepository.delete({ id, tenantId });
+  }
+
+  async findAll(tenantId: string): Promise<BillOfMaterials[]> {
+    const orms = await this.ormRepository.find({ 
+      where: { tenantId }, 
+      order: { createdAt: 'DESC' } 
+    });
+    return orms.map(orm => BillOfMaterials.load({
+      tenantId: new TenantId(orm.tenantId),
+      productId: new UniqueId(orm.productId),
+      name: orm.name,
+      components: orm.components.map((c: any) => ({
+        itemId: new UniqueId(c.itemId),
+        quantity: c.quantity,
+      })),
+      createdAt: orm.createdAt,
+      updatedAt: orm.updatedAt,
+    }, new UniqueId(orm.id)));
   }
 }

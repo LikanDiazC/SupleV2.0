@@ -37,6 +37,6 @@ import { GetOrderByIdUseCase } from './application/use-cases/GetOrderByIdUseCase
     GetOrderByIdUseCase,
   ],
   controllers: [OrdersController],
-  exports: ['IOrderRepository'],
+  exports: ['IOrderRepository', CheckOrderStockUseCase],
 })
 export class OrdersModule {}

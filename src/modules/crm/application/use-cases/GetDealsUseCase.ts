@@ -7,8 +7,8 @@ export class GetDealsUseCase {
     @Inject('IDealRepository') private readonly dealRepo: IDealRepository,
   ) {}
 
-  async execute(tenantId: string) {
-    const deals = await this.dealRepo.findAll(tenantId);
+  async execute(tenantId: string, limit?: number, offset?: number) {
+    const deals = await this.dealRepo.findAll(tenantId, limit, offset);
     
     // Devolvemos la data lista para que el Frontend dibuje las tarjetas
     return deals.map(d => ({

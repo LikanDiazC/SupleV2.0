@@ -20,6 +20,7 @@ export class GoogleMailService {
 getAuthUrl(userId: string, tenantId: string): string {
     const scopes = [
       'https://www.googleapis.com/auth/gmail.readonly',
+      'https://www.googleapis.com/auth/contacts.readonly',
     ];
 
     // 1. Empaquetamos quién es este usuario en un texto (Base64)
@@ -42,44 +43,60 @@ getAuthUrl(userId: string, tenantId: string): string {
   // ... (debajo de getClient)
 
   async getRecentEmails(tokens: any): Promise<any[]> {
-    // 1. Le ponemos los tokens a nuestro cliente
     this.oauth2Client.setCredentials(tokens);
-    
-    // 2. Instanciamos la API de Gmail
     const gmail = google.gmail({ version: 'v1', auth: this.oauth2Client });
 
-    // 3. Pedimos la lista de los últimos 3 correos
     const response = await gmail.users.messages.list({
       userId: 'me',
-      maxResults: 3,
+      maxResults: 20,
     });
 
     const messages = response.data.messages || [];
     const emailsData: any[] = [];
 
-    // 4. Por cada correo, descargamos el detalle (Asunto, De, Para)
     for (const msg of messages) {
       if (!msg.id) continue;
-      
+
       const msgDetail = await gmail.users.messages.get({
         userId: 'me',
         id: msg.id,
+        format: 'full',
       });
 
-      // Extraemos las cabeceras importantes
-      const headers = msgDetail.data.payload?.headers;
-      const subject = headers?.find(h => h.name === 'Subject')?.value;
-      const from = headers?.find(h => h.name === 'From')?.value;
+      const headers = msgDetail.data.payload?.headers ?? [];
+      const subject = headers.find(h => h.name === 'Subject')?.value ?? '(Sin Asunto)';
+      const from    = headers.find(h => h.name === 'From')?.value ?? '';
+      const date    = headers.find(h => h.name === 'Date')?.value;
+
+      const bodyHtml = this.extractBody(msgDetail.data.payload, 'text/html');
+      const bodyText = this.extractBody(msgDetail.data.payload, 'text/plain');
 
       emailsData.push({
-        id: msg.id,
-        from: from,
-        subject: subject,
-        snippet: msgDetail.data.snippet, // Un pequeño resumen del correo
+        id:      msg.id,
+        from,
+        subject,
+        snippet: msgDetail.data.snippet ?? '',
+        bodyHtml,
+        bodyText,
+        date,
       });
     }
 
     return emailsData;
+  }
+
+  private extractBody(payload: any, mimeType: string): string {
+    if (!payload) return '';
+    if (payload.mimeType === mimeType && payload.body?.data) {
+      return Buffer.from(payload.body.data, 'base64url').toString('utf-8');
+    }
+    if (payload.parts) {
+      for (const part of payload.parts) {
+        const result = this.extractBody(part, mimeType);
+        if (result) return result;
+      }
+    }
+    return '';
   }
 
 async watchInbox(tokens: any): Promise<void> {
@@ -108,4 +125,43 @@ async watchInbox(tokens: any): Promise<void> {
     const profile = await gmail.users.getProfile({ userId: 'me' });
     return profile.data.emailAddress || '';
   }
+
+  async getGoogleContacts(tokens: any): Promise<GoogleContactRaw[]> {
+    this.oauth2Client.setCredentials(tokens);
+    const people = google.people({ version: 'v1', auth: this.oauth2Client });
+
+    const results: GoogleContactRaw[] = [];
+    let pageToken: string | undefined;
+
+    do {
+      const res = await people.people.connections.list({
+        resourceName: 'people/me',
+        personFields: 'names,emailAddresses,organizations',
+        pageSize: 1000,
+        ...(pageToken ? { pageToken } : {}),
+      });
+
+      for (const person of res.data.connections ?? []) {
+        const email = person.emailAddresses?.[0]?.value;
+        if (!email) continue;
+        results.push({
+          email: email.toLowerCase(),
+          name:  person.names?.[0]?.displayName ?? '',
+          org:   person.organizations?.[0]?.name ?? '',
+          domain: person.organizations?.[0]?.domain ?? '',
+        });
+      }
+
+      pageToken = res.data.nextPageToken ?? undefined;
+    } while (pageToken);
+
+    return results;
+  }
+}
+
+export interface GoogleContactRaw {
+  email:  string;
+  name:   string;
+  org:    string;
+  domain: string;
 }

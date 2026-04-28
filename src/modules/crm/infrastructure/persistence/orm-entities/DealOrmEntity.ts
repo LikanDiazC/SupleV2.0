@@ -1,10 +1,11 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn , Index } from 'typeorm';
 
 @Entity('crm_deals')
 export class DealOrmEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
+  @Index()
   @Column('uuid')
   tenantId!: string;
 

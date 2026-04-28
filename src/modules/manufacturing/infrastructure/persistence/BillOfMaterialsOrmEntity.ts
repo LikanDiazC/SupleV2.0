@@ -1,10 +1,11 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn , Index } from 'typeorm';
 
 @Entity('bill_of_materials')
 export class BillOfMaterialsOrmEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
+  @Index()
   @Column('uuid')
   tenantId!: string;
 

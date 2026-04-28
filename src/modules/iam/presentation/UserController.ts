@@ -1,4 +1,5 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Req } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { CreateUserUseCase } from '../application/use-cases/CreateUserUseCase';
 import { GetAllUsersUseCase } from '../application/use-cases/GetAllUsersUseCase';
 import { CreateUserDto } from '../application/dtos/CreateUserDto';
@@ -17,9 +18,9 @@ export class UserController {
     private readonly loginUseCase: LoginUseCase,
   ) {}
 
-  // @Post() significa que escuchará el método HTTP POST (que se usa para crear datos)
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @Post()
-  @HttpCode(HttpStatus.CREATED) // Devuelve un código 201 de "Creado exitosamente"
+  @HttpCode(HttpStatus.CREATED)
   async createUser(@Body() dto: CreateUserDto): Promise<{ message: string }> {
     
     // Le pasamos el paquete de datos al Director de Orquesta (el Caso de Uso)
@@ -38,6 +39,7 @@ export class UserController {
     return await this.getAllUsersUseCase.execute(userPayload.tenantId,userPayload.role);
 }
 
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDto) {

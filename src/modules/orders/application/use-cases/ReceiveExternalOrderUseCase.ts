@@ -3,6 +3,7 @@ import type { IOrderRepository } from '../../domain/repositories/IOrderRepositor
 import { Order } from '../../domain/entities/Order';
 import { UniqueId } from '../../../../shared/kernel/UniqueId';
 import { TenantId } from '../../../iam/domain/value-objects/TenantId';
+import { CheckOrderStockUseCase } from './CheckOrderStockUseCase';
 
 export class ExternalOrderItemDto {
   productId!: string;
@@ -10,7 +11,7 @@ export class ExternalOrderItemDto {
 }
 
 export class ExternalOrderDto {
-  externalReference!: string; // El ID que viene de Shopify/Falabella
+  externalReference!: string;
   customerName!: string;
   items!: ExternalOrderItemDto[];
 }
@@ -20,24 +21,27 @@ export class ReceiveExternalOrderUseCase {
   constructor(
     @Inject('IOrderRepository')
     private readonly orderRepository: IOrderRepository,
+    private readonly checkStockUseCase: CheckOrderStockUseCase,
   ) {}
 
-  async execute(tenantId: string, dto: ExternalOrderDto): Promise<void> {
+  async execute(tenantId: string, dto: ExternalOrderDto): Promise<{ id: string; status: string }> {
     try {
       const order = Order.create({
         tenantId: new TenantId(tenantId),
         externalReference: dto.externalReference,
         customerName: dto.customerName,
-        items: dto.items.map(i => ({
+        items: dto.items.map((i) => ({
           productId: new UniqueId(i.productId),
-          quantity: i.quantity,
+          quantity:  i.quantity,
         })),
       });
 
       await this.orderRepository.save(order);
-      
-      // TODO: Aquí dispararemos el siguiente nodo del BPMS (Revisión de Stock)
-      
+
+      // Disparar verificación de stock automáticamente
+      const finalStatus = await this.checkStockUseCase.execute(tenantId, order.id.value);
+
+      return { id: order.id.value, status: finalStatus };
     } catch (error: any) {
       throw new BadRequestException(error.message);
     }

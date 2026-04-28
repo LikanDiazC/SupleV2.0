@@ -28,6 +28,18 @@ export class TypeOrmContactRepository implements IContactRepository {
     await this.ormRepo.save(ormEntity);
   }
 
+  async findById(id: string, tenantId: string): Promise<Contact | null> {
+    const orm = await this.ormRepo.findOne({ where: { id, tenantId } });
+    if (!orm) return null;
+    return Contact.create({
+      tenantId: new TenantId(orm.tenantId),
+      companyId: orm.companyId ? new UniqueId(orm.companyId) : null,
+      email: orm.email,
+      name: orm.name,
+      personality: orm.personality,
+    }, new UniqueId(orm.id));
+  }
+
   async findByEmail(email: string, tenantId: string): Promise<Contact | null> {
     const ormEntity = await this.ormRepo.findOne({ where: { email, tenantId } });
     if (!ormEntity) return null;

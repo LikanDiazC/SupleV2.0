@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IUserRepository } from '../../domain/repositories/IUserRepository';
+import { IUserRepository, GoogleTokens } from '../../domain/repositories/IUserRepository';
 import { User } from '../../domain/entities/User';
 import { UserOrmEntity } from './UserOrmEntity';
 import { UniqueId } from '../../../../shared/kernel/UniqueId';
@@ -68,8 +68,29 @@ async findAll(tenantId?: string): Promise<User[]> {
     return ormEntities.map(ormEntity => this.mapToDomain(ormEntity));
   }
 
-  // Traductor: de la BD al Dominio
- // Traductor: de la BD al Dominio
+  async saveGoogleTokens(userId: string, tokens: GoogleTokens): Promise<void> {
+    await this.ormRepository.update(userId, {
+      googleAccessToken:  tokens.access_token  ?? undefined,
+      googleRefreshToken: tokens.refresh_token ?? undefined,
+      googleTokenExpiry:  tokens.expiry_date   ?? undefined,
+    });
+  }
+
+  async getGoogleTokens(userId: string): Promise<GoogleTokens | null> {
+    const row = await this.ormRepository.findOne({ where: { id: userId } });
+    if (!row?.googleRefreshToken) return null;
+    return {
+      access_token:  row.googleAccessToken,
+      refresh_token: row.googleRefreshToken,
+      expiry_date:   row.googleTokenExpiry ? Number(row.googleTokenExpiry) : undefined,
+    };
+  }
+
+  async hasGoogleLinked(userId: string): Promise<boolean> {
+    const row = await this.ormRepository.findOne({ where: { id: userId } });
+    return !!row?.googleRefreshToken;
+  }
+
   private mapToDomain(ormEntity: UserOrmEntity): User {
     return User.create(
       {

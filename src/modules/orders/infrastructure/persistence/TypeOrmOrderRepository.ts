@@ -50,10 +50,12 @@ export class TypeOrmOrderRepository implements IOrderRepository {
     }, new UniqueId(orm.id));
   }
 
-  async findAll(tenantId: string): Promise<Order[]> {
+  async findAll(tenantId: string, limit = 200, offset = 0): Promise<Order[]> {
     const ormEntities = await this.ormRepository.find({
-      where: { tenantId: tenantId },
-      order: { createdAt: 'DESC' }, // Ordenamos de la más nueva a la más vieja
+      where: { tenantId },
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: offset,
     });
 
     return ormEntities.map(orm => Order.load({

@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { TenantOrmEntity } from '../../../tenant/infrastructure/persistence/TenantOrmEntity';
 
 // 1. @Entity le dice a TypeORM: "Crea una tabla en Postgres llamada 'users' usando esta clase"
@@ -22,6 +22,7 @@ export class UserOrmEntity {
   @Column()
   lastName!: string;
 
+  @Index()
   @Column()
   tenantId!: string;
 
@@ -35,9 +36,17 @@ export class UserOrmEntity {
   @Column({ default: 'USER' })
   role!: string;
 
+  @Column({ type: 'text', nullable: true })
+  googleAccessToken?: string;
+
+  @Column({ type: 'text', nullable: true })
+  googleRefreshToken?: string;
+
+  @Column({ type: 'bigint', nullable: true })
+  googleTokenExpiry?: number;
+
   @ManyToOne(() => TenantOrmEntity, (tenant) => tenant.users)
 
-  // 4. Estas son "columnas mágicas" de TypeORM que guardan automáticamente la fecha de creación y de última modificación.
   @CreateDateColumn()
   createdAt!: Date;
 

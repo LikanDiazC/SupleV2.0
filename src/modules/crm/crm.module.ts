@@ -19,11 +19,13 @@ import { GetDealsUseCase } from './application/use-cases/GetDealsUseCase';
 import { MoveDealStageUseCase } from './application/use-cases/MoveDealStageUseCase';
 import { AddDealActivityUseCase } from './application/use-cases/AddDealActivityUseCase';
 // 👇 1. ASEGÚRATE DE IMPORTARLO AQUÍ ARRIBA
-import { GetActiveDealForContactUseCase } from './application/use-cases/GetActiveDealForContactUseCase'; 
+import { GetActiveDealForContactUseCase } from './application/use-cases/GetActiveDealForContactUseCase';
+import { SyncGoogleContactsUseCase } from './application/use-cases/SyncGoogleContactsUseCase';
 
 import { CrmController } from './presentation/CrmController';
 import { DealsController } from './presentation/DealsController';
 import { OrdersModule } from '../orders/orders.module';
+import { ManufacturingModule } from '../manufacturing/manufacturing.module';
 
 @Module({
   imports: [
@@ -34,6 +36,7 @@ import { OrdersModule } from '../orders/orders.module';
       DealActivityOrmEntity   
     ]), 
     OrdersModule,
+    ManufacturingModule,
   ],
   controllers: [CrmController, DealsController],
   providers: [
@@ -48,12 +51,14 @@ import { OrdersModule } from '../orders/orders.module';
     GetDealsUseCase,
     MoveDealStageUseCase,
     AddDealActivityUseCase,
-    GetActiveDealForContactUseCase, // 👈 2. FALTABA AGREGARLO AQUÍ EN LOS PROVIDERS
+    GetActiveDealForContactUseCase,
+    SyncGoogleContactsUseCase,
   ],
   exports: [
-    IngestEmailContactUseCase, 
-    GetActiveDealForContactUseCase, // Y LO EXPORTAMOS AQUÍ
-    AddDealActivityUseCase
-  ], 
+    IngestEmailContactUseCase,
+    GetActiveDealForContactUseCase,
+    AddDealActivityUseCase,
+    SyncGoogleContactsUseCase,
+  ],
 })
 export class CrmModule {}

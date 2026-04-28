@@ -8,7 +8,7 @@ import { TenantId } from '../../../iam/domain/value-objects/TenantId';
 
 // 👇 NUEVO DTO
 export class CreateDealItemDto {
-  productId!: string;
+  bomId!:    string;
   quantity!: number;
 }
 
@@ -38,8 +38,8 @@ export class CreateDealUseCase {
         assignedUserId: new UniqueId(userId),
         // 👇 Mapeamos el carrito si lo enviaron
         items: dto.items ? dto.items.map(i => ({
-          productId: new UniqueId(i.productId),
-          quantity: i.quantity
+          bomId:    new UniqueId(i.bomId),
+          quantity: i.quantity,
         })) : [],
       });
 

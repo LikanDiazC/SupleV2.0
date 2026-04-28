@@ -41,19 +41,21 @@ const payload = {
       name: `${user.firstName} ${user.lastName}` 
     };
 
-    const accessToken = await this.jwtService.signAsync(payload);
+    const accessToken     = await this.jwtService.signAsync(payload);
+    const hasGoogleLinked = await this.userRepository.hasGoogleLinked(user.id.value);
 
     return {
       message: '¡Inicio de sesión exitoso!',
-      accessToken: accessToken,
+      accessToken,
+      hasGoogleLinked,
       user: {
-        id: payload.sub,
-        tenantId: payload.tenantId,
-        tenantName: payload.tenantName, // 👈 También lo incluimos aquí
-        role: payload.role,
-        email: payload.email,
-        name: payload.name
-      }
+        id:         payload.sub,
+        tenantId:   payload.tenantId,
+        tenantName: payload.tenantName,
+        role:       payload.role,
+        email:      payload.email,
+        name:       payload.name,
+      },
     };
   }
 }

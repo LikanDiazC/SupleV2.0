@@ -16,10 +16,7 @@ export class JwtAuthGuard implements CanActivate {
     }
     
     try {
-      // Verificamos si el token es real y no ha expirado
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: 'MI_FIRMA_SECRETA_SÚPER_SEGURA'
-      });
+      const payload = await this.jwtService.verifyAsync(token);
       // Si todo está bien, adjuntamos la información a la petición
       request['user'] = payload;
     } catch {

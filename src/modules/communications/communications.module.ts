@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm'; // 👈 Nuevo
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommsController } from './presentation/CommsController';
 import { GoogleMailService } from './infrastructure/google/GoogleMailService';
 import { CrmModule } from '../crm/crm.module';
+import { IamModule } from '../iam/iam.module';
 import { EmailMessageOrmEntity } from './infrastructure/persistence/orm-entities/EmailMessageOrmEntity'; // 👈 Nuevo
 import { TypeOrmEmailRepository } from './infrastructure/persistence/TypeOrmEmailRepository'; // 👈 Nuevo
 import { AiSummarizerService } from './infrastructure/ai/AiSummarizerService';
@@ -10,8 +11,9 @@ import { AiChatController } from './presentation/AiChatController';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([EmailMessageOrmEntity]), // 👈 Para que cree la tabla
-    CrmModule
+    TypeOrmModule.forFeature([EmailMessageOrmEntity]),
+    CrmModule,
+    IamModule,
   ],
   controllers: [CommsController,AiChatController],
   providers: [

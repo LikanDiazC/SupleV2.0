@@ -1,60 +1,119 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import type { IOrderRepository } from '../../domain/repositories/IOrderRepository';
-import type { IItemRepository } from '../../../inventory/domain/repositories/IItemRepository';
+import type { IMaterialRepository } from '../../../inventory/domain/repositories/IMaterialRepository';
+import type { IBomComponentRepository } from '../../../manufacturing/domain/repositories/IBomComponentRepository';
 import type { IBillOfMaterialsRepository } from '../../../manufacturing/domain/repositories/IBillOfMaterialsRepository';
+import type { Material } from '../../../inventory/domain/entities/Material';
+
+interface MaterialNeed {
+  material: Material;
+  totalPieceAreaMm2: number;  // for SHEET: accumulated piece area
+  totalQuantity: number;      // for non-SHEET: accumulated units
+}
 
 @Injectable()
 export class CheckOrderStockUseCase {
   constructor(
     @Inject('IOrderRepository')
     private readonly orderRepository: IOrderRepository,
-    @Inject('IItemRepository')
-    private readonly itemRepository: IItemRepository,
+    @Inject('IMaterialRepository')
+    private readonly materialRepository: IMaterialRepository,
+    @Inject('IBomComponentRepository')
+    private readonly bomComponentRepository: IBomComponentRepository,
     @Inject('IBillOfMaterialsRepository')
     private readonly bomRepository: IBillOfMaterialsRepository,
   ) {}
 
   async execute(tenantId: string, orderId: string): Promise<string> {
-    // 1. Buscamos la orden
     const order = await this.orderRepository.findById(orderId, tenantId);
     if (!order) throw new NotFoundException('Orden no encontrada.');
 
-    // 2. Avanzamos la máquina de estados al nodo de evaluación
     order.markAsCheckingStock();
 
-    let hasAllMaterials = true;
+    // Accumulate needs per material across all order items
+    const needs = new Map<string, MaterialNeed>();
 
-    // 3. Revisamos cada producto que pidieron (Ej: La silla)
     for (const item of order.items) {
+      const itemQty = Number(item.quantity) || 1;
+
       const bom = await this.bomRepository.findByProductId(item.productId.value, tenantId);
-      
       if (!bom) {
-        hasAllMaterials = false; 
-        break; // Si no hay receta, es imposible fabricarla
+        order.putOnHoldForMaterials();
+        await this.orderRepository.save(order);
+        return order.status;
       }
 
-      // 4. Revisamos los ingredientes (Ej: La madera)
-      for (const component of bom.components) {
-        const totalRequired = component.quantity * item.quantity; // Ej: 2 maderas x 2 sillas = 4 maderas necesarias
-        const material = await this.itemRepository.findById(component.itemId.value, tenantId);
+      const components = await this.bomComponentRepository.findByBomId(bom.id.value, tenantId);
 
-        if (!material || material.stock < totalRequired) {
-          hasAllMaterials = false;
-          break; // Nos quedamos sin madera
+      // Fallback: if bom_components is empty, use JSONB components from bill_of_materials
+      const effectiveComponents = components.length > 0
+        ? components.map(c => ({
+            materialId: c.materialId.value,
+            quantity:   c.quantity,
+            pieceWidthMm:  c.pieceWidthMm,
+            pieceHeightMm: c.pieceHeightMm,
+          }))
+        : bom.components.map(c => ({
+            materialId: c.itemId.value,
+            quantity:   c.quantity,
+            pieceWidthMm:  undefined as number | undefined,
+            pieceHeightMm: undefined as number | undefined,
+          }));
+
+      if (effectiveComponents.length === 0) {
+        order.putOnHoldForMaterials();
+        await this.orderRepository.save(order);
+        return order.status;
+      }
+
+      for (const comp of effectiveComponents) {
+        if (!needs.has(comp.materialId)) {
+          const material = await this.materialRepository.findById(comp.materialId, tenantId);
+          if (!material) {
+            order.putOnHoldForMaterials();
+            await this.orderRepository.save(order);
+            return order.status;
+          }
+          needs.set(comp.materialId, { material, totalPieceAreaMm2: 0, totalQuantity: 0 });
+        }
+
+        const need = needs.get(comp.materialId)!;
+        const piecesNeeded = Number(comp.quantity) * itemQty;
+
+        if (
+          need.material.materialType === 'SHEET' &&
+          comp.pieceWidthMm && comp.pieceHeightMm
+        ) {
+          need.totalPieceAreaMm2 += comp.pieceWidthMm * comp.pieceHeightMm * piecesNeeded;
+        } else {
+          need.totalQuantity += piecesNeeded;
         }
       }
     }
 
-    // 5. Resolución de la Máquina de Estados
-    if (hasAllMaterials) {
-      order.markAsReadyToStart();
-    } else {
-      order.putOnHoldForMaterials();
+    // Verify stock for each accumulated material
+    for (const [, { material, totalPieceAreaMm2, totalQuantity }] of needs) {
+      if (material.materialType === 'SHEET' && material.sheetWidthMm && material.sheetHeightMm) {
+        const sheetArea = material.sheetWidthMm * material.sheetHeightMm;
+        const sheetsNeeded = totalPieceAreaMm2 > 0
+          ? Math.ceil(totalPieceAreaMm2 / sheetArea)
+          : totalQuantity; // fallback if no dimensions
+        if (material.stock < sheetsNeeded) {
+          order.putOnHoldForMaterials();
+          await this.orderRepository.save(order);
+          return order.status;
+        }
+      } else {
+        if (material.stock < totalQuantity) {
+          order.putOnHoldForMaterials();
+          await this.orderRepository.save(order);
+          return order.status;
+        }
+      }
     }
 
-    // 6. Guardamos el nuevo estado en la base de datos
+    order.markAsReadyToStart();
     await this.orderRepository.save(order);
-
     return order.status;
   }
 }

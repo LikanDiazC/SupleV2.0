@@ -1,14 +1,17 @@
-import { Controller, Get, Res, Req, Query, UseGuards, Inject, Post, Body } from '@nestjs/common';
+import { Controller, Get, Res, Req, Query, UseGuards, Inject, Post, Body, HttpCode } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { GoogleMailService } from '../infrastructure/google/GoogleMailService';
 import { IngestEmailContactUseCase } from '../../crm/application/use-cases/IngestEmailContactUseCase';
-import { GetActiveDealForContactUseCase } from '../../crm/application/use-cases/GetActiveDealForContactUseCase'; // 👈 NUEVO
-import { AddDealActivityUseCase } from '../../crm/application/use-cases/AddDealActivityUseCase'; // 👈 NUEVO
+import { GetActiveDealForContactUseCase } from '../../crm/application/use-cases/GetActiveDealForContactUseCase';
+import { AddDealActivityUseCase } from '../../crm/application/use-cases/AddDealActivityUseCase';
+import { SyncGoogleContactsUseCase } from '../../crm/application/use-cases/SyncGoogleContactsUseCase';
+import type { IUserRepository } from '../../iam/domain/repositories/IUserRepository';
 import type { IEmailRepository } from '../domain/repositories/IEmailRepository'; 
 import { EmailMessage } from '../domain/entities/EmailMessage';
 import { TenantId } from '../../iam/domain/value-objects/TenantId';
 import { UniqueId } from '../../../shared/kernel/UniqueId';
 import { JwtAuthGuard } from 'src/modules/iam/infrastructure/guards/JwtAuthGuard';
+import { WebhookSecretGuard } from 'src/common/guards/WebhookSecretGuard';
 import { AiSummarizerService } from '../infrastructure/ai/AiSummarizerService';
 
 @Controller('comms') 
@@ -16,10 +19,12 @@ export class CommsController {
   constructor(
     private readonly googleMailService: GoogleMailService,
     private readonly ingestEmailContactUseCase: IngestEmailContactUseCase,
-    private readonly getActiveDealForContactUseCase: GetActiveDealForContactUseCase, // 👈 INYECTADO
-    private readonly addDealActivityUseCase: AddDealActivityUseCase,                 // 👈 INYECTADO
-    @Inject('IEmailRepository') private readonly emailRepo: IEmailRepository, 
-    private readonly aiSummarizer: AiSummarizerService,   
+    private readonly getActiveDealForContactUseCase: GetActiveDealForContactUseCase,
+    private readonly addDealActivityUseCase: AddDealActivityUseCase,
+    private readonly syncGoogleContactsUseCase: SyncGoogleContactsUseCase,
+    @Inject('IEmailRepository') private readonly emailRepo: IEmailRepository,
+    @Inject('IUserRepository') private readonly userRepo: IUserRepository,
+    private readonly aiSummarizer: AiSummarizerService,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -28,7 +33,16 @@ export class CommsController {
     const userPayload = request['user'] as any;
     const userId = userPayload.sub || userPayload.id;
     const url = this.googleMailService.getAuthUrl(userId, userPayload.tenantId);
-    return { message: 'Abre esta URL en tu navegador para vincular tu Gmail', url: url };
+    return { url };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('auth/status')
+  getGoogleAuthStatus(@Req() request: Request) {
+    const userPayload = request['user'] as any;
+    const email = userPayload.email as string;
+    const linked = !!email && this.googleMailService.activeUsers.has(email);
+    return { linked };
   }
 
 @Get('auth/callback')
@@ -54,19 +68,31 @@ export class CommsController {
 
       const userEmailAddress = await this.googleMailService.getUserEmail(tokens);
       this.googleMailService.activeUsers.set(userEmailAddress, { userId, tenantId, tokens });
+
+      // Persistir tokens en BD vinculados al usuario
+      await this.userRepo.saveGoogleTokens(userId, tokens);
       
       const recentEmails = await this.googleMailService.getRecentEmails(tokens);
       await this.googleMailService.watchInbox(tokens);
 
       await this.processEmails(recentEmails, tenantId, userId);
 
-      return res.json({ message: '¡Bandeja sincronizada con éxito!', ownerId: userId });
+      // Sync de contactos en background — no bloquea el redirect
+      this.googleMailService.getGoogleContacts(tokens)
+        .then((contacts) => this.syncGoogleContactsUseCase.execute(tenantId, contacts))
+        .then((result) => console.log(`✅ Contactos Google sincronizados: ${result.created} nuevos, ${result.skipped} ya existían`))
+        .catch((err) => console.warn('⚠️ No se pudieron sincronizar contactos de Google:', err.message));
+
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+      return res.redirect(`${frontendUrl}/overview`);
     } catch (error) {
       console.error('Error al sincronizar:', error);
-      return res.status(500).send('Hubo un error en la sincronización con Google.');
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+      return res.redirect(`${frontendUrl}/overview?google_error=1`);
     }
   }
   
+  @UseGuards(WebhookSecretGuard)
   @Post('webhook/gmail')
   async handleGmailWebhook(@Body() body: any, @Res() res: Response) {
     res.status(200).send('OK'); 
@@ -91,10 +117,64 @@ export class CommsController {
 
   @UseGuards(JwtAuthGuard)
   @Get('emails')
-    async getEmails(@Req() request: Request) {
-      const userPayload = request['user'] as any;
-      return await this.emailRepo.findAll(userPayload.tenantId);
+  async getEmails(@Req() request: Request) {
+    const userPayload = request['user'] as any;
+    const emails = await this.emailRepo.findAll(userPayload.tenantId);
+    return emails.map(e => ({
+      id:          e.id.value,
+      sender:      e.sender,
+      subject:     e.subject,
+      bodySnippet: e.bodySnippet,
+      bodyHtml:    e.bodyHtml,
+      receivedAt:  e.receivedAt,
+      isProcessed: e.isProcessed,
+    }));
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(200)
+  @Post('auth/restore-session')
+  async restoreGoogleSession(@Req() request: Request) {
+    const userPayload = request['user'] as any;
+    const userId   = userPayload.sub as string;
+    const tenantId = userPayload.tenantId as string;
+    const email    = userPayload.email as string;
+
+    // Ya está en memoria
+    if (this.googleMailService.activeUsers.has(email)) {
+      return { restored: true };
     }
+
+    const tokens = await this.userRepo.getGoogleTokens(userId);
+    if (!tokens?.refresh_token) return { restored: false };
+
+    this.googleMailService.activeUsers.set(email, { userId, tenantId, tokens });
+
+    // Sincronizar contactos en background
+    this.googleMailService.getGoogleContacts(tokens)
+      .then((contacts) => this.syncGoogleContactsUseCase.execute(tenantId, contacts))
+      .then((r) => console.log(`✅ Contactos restaurados: ${r.created} nuevos`))
+      .catch((err) => console.warn('⚠️ Error restaurando contactos:', err.message));
+
+    return { restored: true };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('sync-contacts')
+  async syncContacts(@Req() request: Request) {
+    const userPayload = request['user'] as any;
+    const tenantId    = userPayload.tenantId;
+    const userEmail   = userPayload.email;
+
+    const session = this.googleMailService.activeUsers.get(userEmail);
+    if (!session) {
+      return { message: 'No hay sesión de Google activa. Vincula tu cuenta primero.', synced: 0 };
+    }
+
+    const contacts = await this.googleMailService.getGoogleContacts(session.tokens);
+    const result   = await this.syncGoogleContactsUseCase.execute(tenantId, contacts);
+    return { message: 'Sincronización completada', ...result };
+  }
 
   // 👇 LÓGICA CENTRALIZADA PARA PROCESAR CORREOS
   private async processEmails(emails: any[], tenantId: string, userId: string) {
@@ -116,8 +196,8 @@ export class CommsController {
           recipient: 'me',
           subject: emailData.subject || '(Sin Asunto)',
           bodySnippet: emailData.snippet || '',
-          bodyHtml: '', 
-          receivedAt: new Date(),
+          bodyHtml: emailData.bodyHtml || '',
+          receivedAt: emailData.date ? new Date(emailData.date) : new Date(),
           isProcessed: true,
         });
 
@@ -141,23 +221,6 @@ if (activeDeal) {
             }
           );
 
-          // 🧠 ¡AQUÍ ENTRA LA INTELIGENCIA ARTIFICIAL! 🧠
-          // Le pedimos a la IA que lea el correo y nos dé un resumen
-          const iaSummary = await this.aiSummarizer.summarizeEmail(
-            emailData.subject || '', 
-            emailData.snippet || ''
-          );
-
-          // Guardamos el resumen de la IA en el tablero del negocio
-          await this.addDealActivityUseCase.execute(
-            tenantId, 
-            userId, 
-            activeDeal.id, 
-            {
-              type: 'AI_SUMMARY',
-              content: `🤖 Asistente IA:\n${iaSummary}`
-            }
-          );
         }
         }
 

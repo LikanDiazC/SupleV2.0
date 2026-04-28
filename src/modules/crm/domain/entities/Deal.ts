@@ -5,7 +5,7 @@ export type DealStage = 'NUEVO' | 'REUNION_AGENDADA' | 'PROPUESTA_ENVIADA' | 'GA
 
 // 👇 NUEVO: Definimos qué es un "Item" dentro de una venta
 export interface DealItem {
-  productId: UniqueId;
+  bomId:    UniqueId;
   quantity: number;
 }
 

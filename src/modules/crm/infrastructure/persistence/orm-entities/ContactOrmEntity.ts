@@ -1,4 +1,4 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, CreateDateColumn, ManyToOne, JoinColumn , Index } from 'typeorm';
 import { CompanyOrmEntity } from './CompanyOrmEntity';
 
 @Entity('crm_contacts')
@@ -6,6 +6,7 @@ export class ContactOrmEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
+  @Index()
   @Column('uuid')
   tenantId!: string;
 
