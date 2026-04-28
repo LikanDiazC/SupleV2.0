@@ -36,7 +36,8 @@ export class CreateUserUseCase {
       lastName: dto.lastName,
       isActive: true,
       tenantId: new TenantId(dto.tenantId),
-      role: 'USER' // Por defecto, el nuevo usuario es un "USER". Más adelante podríamos permitir elegir el rol desde el DTO.
+      role: 'USER',
+      mustChangePassword: true,
     });
 
     // 4. ¡Se lo pasamos al Repositorio para que lo guarde en PostgreSQL!

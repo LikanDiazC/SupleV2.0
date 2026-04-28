@@ -25,6 +25,7 @@ export class TypeOrmUserRepository implements IUserRepository {
       isActive: user.isActive,
       tenantId: user.tenantId.value,
       role: user.role,
+      mustChangePassword: user.mustChangePassword,
     });
 
     await this.ormRepository.save(ormEntity);
@@ -91,6 +92,13 @@ async findAll(tenantId?: string): Promise<User[]> {
     return !!row?.googleRefreshToken;
   }
 
+  async changePassword(userId: string, newHash: string): Promise<void> {
+    await this.ormRepository.update(userId, {
+      passwordHash: newHash,
+      mustChangePassword: false,
+    });
+  }
+
   private mapToDomain(ormEntity: UserOrmEntity): User {
     return User.create(
       {
@@ -100,8 +108,9 @@ async findAll(tenantId?: string): Promise<User[]> {
         lastName: ormEntity.lastName,
         isActive: ormEntity.isActive,
         tenantId: new TenantId(ormEntity.tenantId),
-        tenantName: ormEntity.tenant?.name, // 👈 Aquí cargamos el nombre de la empresa
+        tenantName: ormEntity.tenant?.name,
         role: ormEntity.role,
+        mustChangePassword: ormEntity.mustChangePassword,
       },
       new UniqueId(ormEntity.id),
     );

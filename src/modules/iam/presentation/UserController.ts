@@ -1,10 +1,12 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, Patch, UseGuards, Req } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { CreateUserUseCase } from '../application/use-cases/CreateUserUseCase';
 import { GetAllUsersUseCase } from '../application/use-cases/GetAllUsersUseCase';
 import { CreateUserDto } from '../application/dtos/CreateUserDto';
 import { LoginUseCase } from '../application/use-cases/LoginUseCase';
 import { LoginDto } from '../application/dtos/LoginDto';
+import { ChangePasswordUseCase } from '../application/use-cases/ChangePasswordUseCase';
+import { ChangePasswordDto } from '../application/dtos/ChangePasswordDto';
 import { JwtAuthGuard } from '../infrastructure/guards/JwtAuthGuard';
 import { Roles } from '../infrastructure/guards/roles.decorator';
 import { RolesGuard } from '../infrastructure/guards/RolesGuard';
@@ -16,6 +18,7 @@ export class UserController {
     private readonly createUserUseCase: CreateUserUseCase,
     private readonly getAllUsersUseCase: GetAllUsersUseCase,
     private readonly loginUseCase: LoginUseCase,
+    private readonly changePasswordUseCase: ChangePasswordUseCase,
   ) {}
 
   @Throttle({ default: { ttl: 60_000, limit: 5 } })
@@ -44,5 +47,14 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDto) {
     return await this.loginUseCase.execute(dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('change-password')
+  @HttpCode(HttpStatus.OK)
+  async changePassword(@Req() request: Request, @Body() dto: ChangePasswordDto) {
+    const userPayload = request['user'] as any;
+    await this.changePasswordUseCase.execute(userPayload.sub, dto.newPassword);
+    return { message: 'Contraseña actualizada exitosamente.' };
   }
 }

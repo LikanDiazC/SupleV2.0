@@ -6,6 +6,7 @@ import { CreateUserUseCase } from './application/use-cases/CreateUserUseCase';
 import { TypeOrmUserRepository } from './infrastructure/persistence/TypeOrmUserRepository';
 import { GetAllUsersUseCase } from './application/use-cases/GetAllUsersUseCase';
 import { LoginUseCase } from './application/use-cases/LoginUseCase';
+import { ChangePasswordUseCase } from './application/use-cases/ChangePasswordUseCase';
 import { JwtModule } from '@nestjs/jwt';
 
 @Module({
@@ -32,6 +33,7 @@ import { JwtModule } from '@nestjs/jwt';
     CreateUserUseCase,
     GetAllUsersUseCase,
     LoginUseCase,
+    ChangePasswordUseCase,
     {
       provide: 'IUserRepository',
       useClass: TypeOrmUserRepository,

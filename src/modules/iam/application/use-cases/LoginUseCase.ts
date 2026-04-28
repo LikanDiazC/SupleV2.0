@@ -48,6 +48,7 @@ const payload = {
       message: '¡Inicio de sesión exitoso!',
       accessToken,
       hasGoogleLinked,
+      mustChangePassword: user.mustChangePassword,
       user: {
         id:         payload.sub,
         tenantId:   payload.tenantId,

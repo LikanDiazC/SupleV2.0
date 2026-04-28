@@ -17,4 +17,5 @@ export interface IUserRepository {
   saveGoogleTokens(userId: string, tokens: GoogleTokens): Promise<void>;
   getGoogleTokens(userId: string): Promise<GoogleTokens | null>;
   hasGoogleLinked(userId: string): Promise<boolean>;
+  changePassword(userId: string, newHash: string): Promise<void>;
 }

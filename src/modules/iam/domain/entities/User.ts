@@ -11,8 +11,8 @@ export interface UserProps {
   isActive: boolean;
   tenantId: TenantId;
   role: string;
-  tenantName?: string; // Por ahora lo dejamos como string, pero podríamos crear un Value Object o una Enum para esto
-  // (Más adelante conectaremos el Rol y el Tenant aquí)
+  tenantName?: string;
+  mustChangePassword?: boolean;
 }
 
 // 2. Creamos la clase extendiendo de nuestro molde Kernel (Entity)
@@ -32,6 +32,7 @@ export class User extends Entity<UserProps> {
   get tenantId(): TenantId { return this.props.tenantId; }
   get role(): string { return this.props.role; }
   get tenantName(): string | undefined { return this.props.tenantName; }
+  get mustChangePassword(): boolean { return this.props.mustChangePassword ?? true; }
 
   // 4. Factory Method: La ÚNICA forma oficial de crear un Usuario en el sistema
   public static create(props: UserProps, id?: UniqueId): User {
