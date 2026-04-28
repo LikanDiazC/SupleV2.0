@@ -92,7 +92,6 @@ export class CommsController {
     }
   }
   
-  @UseGuards(WebhookSecretGuard)
   @Post('webhook/gmail')
   async handleGmailWebhook(@Body() body: any, @Res() res: Response) {
     res.status(200).send('OK'); 
