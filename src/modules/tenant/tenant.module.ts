@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TenantOrmEntity } from './infrastructure/persistence/TenantOrmEntity';
 import { TenantController } from './presentation/TenantController';
 import { CreateTenantUseCase } from './application/use-cases/CreateTenantUseCase';
+import { SaveShopifyTokenUseCase } from './application/use-cases/SaveShopifyTokenUseCase';
 import { TypeOrmTenantRepository } from './infrastructure/persistence/TypeOrmTenantRepository';
 
 @Module({
@@ -14,6 +15,7 @@ import { TypeOrmTenantRepository } from './infrastructure/persistence/TypeOrmTen
   ],
   providers: [
     CreateTenantUseCase,
+    SaveShopifyTokenUseCase,
     {
       provide: 'ITenantRepository',
       useClass: TypeOrmTenantRepository,

@@ -5,14 +5,15 @@ export class Tenant {
     public readonly id: UniqueId,
     public readonly name: string,
     public readonly isActive: boolean,
+    public readonly shopifyAccessToken?: string,
   ) {}
 
-  // Esta es la fábrica que crea la Empresa
-  static create(props: { name: string; isActive?: boolean }, id?: UniqueId): Tenant {
+  static create(props: { name: string; isActive?: boolean; shopifyAccessToken?: string }, id?: UniqueId): Tenant {
     return new Tenant(
-      id ?? new UniqueId(), // Si no nos pasan un ID, generamos uno nuevo automáticamente
+      id ?? new UniqueId(),
       props.name,
-      props.isActive ?? true, // Por defecto, la empresa nace "activa"
+      props.isActive ?? true,
+      props.shopifyAccessToken,
     );
   }
 }

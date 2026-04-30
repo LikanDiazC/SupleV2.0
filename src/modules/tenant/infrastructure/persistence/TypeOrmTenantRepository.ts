@@ -21,4 +21,8 @@ export class TypeOrmTenantRepository implements ITenantRepository {
     });
     await this.ormRepository.save(ormEntity);
   }
+
+  async updateShopifyToken(tenantId: string, token: string): Promise<void> {
+    await this.ormRepository.update(tenantId, { shopifyAccessToken: token });
+  }
 }

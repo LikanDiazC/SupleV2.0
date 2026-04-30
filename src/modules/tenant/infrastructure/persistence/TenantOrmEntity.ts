@@ -12,6 +12,9 @@ export class TenantOrmEntity {
   @Column({ default: true })
   isActive!: boolean;
 
+  @Column({ nullable: true })
+  shopifyAccessToken?: string;
+
   @CreateDateColumn()
   createdAt!: Date;
 
