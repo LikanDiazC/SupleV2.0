@@ -1,13 +1,13 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
 import { CreateTenantUseCase } from '../application/use-cases/CreateTenantUseCase';
-import { SaveShopifyTokenUseCase } from '../application/use-cases/SaveShopifyTokenUseCase';
+import { ShopifyOAuthCallbackUseCase } from '../application/use-cases/ShopifyOAuthCallbackUseCase';
 import { CreateTenantDto } from '../application/dtos/CreateTenantDto';
 
 @Controller('tenants')
 export class TenantController {
   constructor(
     private readonly createTenantUseCase: CreateTenantUseCase,
-    private readonly saveShopifyTokenUseCase: SaveShopifyTokenUseCase,
+    private readonly shopifyOAuthCallback: ShopifyOAuthCallbackUseCase,
   ) {}
 
   @Post()
@@ -16,10 +16,25 @@ export class TenantController {
     return await this.createTenantUseCase.execute(dto);
   }
 
-  @Post('shopify/callback')
-  @HttpCode(HttpStatus.OK)
-  async shopifyCallback(@Body() body: { tenantId: string; accessToken: string }) {
-    await this.saveShopifyTokenUseCase.execute(body.tenantId, body.accessToken);
+  @Get('shopify/callback')
+  async shopifyCallback(
+    @Query('shop') shop: string,
+    @Query('code') code: string,
+    @Query('state') state: string,
+  ) {
+    if (!shop || !code || !state) {
+      throw new BadRequestException('Missing required parameters: shop, code, state');
+    }
+
+    let tenantId: string;
+    try {
+      const decodedState = Buffer.from(state, 'base64').toString('utf-8');
+      tenantId = JSON.parse(decodedState).tenantId;
+    } catch {
+      throw new BadRequestException('Invalid or corrupted state parameter');
+    }
+
+    await this.shopifyOAuthCallback.execute(shop, code, tenantId);
     return { ok: true };
   }
 }
