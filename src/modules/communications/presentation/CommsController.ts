@@ -118,7 +118,7 @@ export class CommsController {
   @Get('emails')
   async getEmails(@Req() request: Request) {
     const userPayload = request['user'] as any;
-    const emails = await this.emailRepo.findAll(userPayload.tenantId);
+    const emails = await this.emailRepo.findAll(userPayload.tenantId, userPayload.sub);
     return emails.map(e => ({
       id:          e.id.value,
       sender:      e.sender,

@@ -58,12 +58,15 @@ export class TypeOrmEmailRepository implements IEmailRepository {
     return email;
   }
 
-async findAll(tenantId: string): Promise<EmailMessage[]> {
+async findAll(tenantId: string, userId?: string): Promise<EmailMessage[]> {
+    const where: any = { tenantId };
+    if (userId) where.userId = userId;
+
     const ormEntities = await this.ormRepo.find({
-      where: { tenantId },
+      where,
       order: { receivedAt: 'DESC' }
     });
-    
+
     return ormEntities.map(orm => EmailMessage.create({
       tenantId: new TenantId(orm.tenantId),
       userId: new UniqueId(orm.userId),
