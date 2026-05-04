@@ -1,8 +1,21 @@
-// Este es el "molde" de los datos que nos enviará Postman o el Frontend
+import { IsEmail, IsString, IsNotEmpty, IsUUID } from 'class-validator';
+
 export class CreateUserDto {
+  @IsEmail()
   email!: string;
+
+  @IsString()
+  @IsNotEmpty()
   password!: string;
+
+  @IsString()
+  @IsNotEmpty()
   firstName!: string;
+
+  @IsString()
+  @IsNotEmpty()
   lastName!: string;
+
+  @IsUUID()
   tenantId!: string;
 }
