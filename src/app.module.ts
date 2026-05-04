@@ -14,6 +14,7 @@ import { CommunicationsModule } from './modules/communications/communications.mo
 import { CrmModule } from './modules/crm/crm.module';
 import { MarketingModule } from './modules/marketing/MarketingModule';
 import { HrModule } from './modules/hr/hr.module';
+import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { HrModule } from './modules/hr/hr.module';
     CrmModule,
     MarketingModule,
     HrModule,
+    MarketplaceModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
