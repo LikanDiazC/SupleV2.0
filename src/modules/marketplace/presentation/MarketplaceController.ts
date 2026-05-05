@@ -1,9 +1,11 @@
 import {
   Controller, Get, Post, Patch, Delete,
   Query, Body, Param, Req, UseGuards,
-  ParseIntPipe, DefaultValuePipe, BadRequestException, NotFoundException,
+  ParseIntPipe, DefaultValuePipe, BadRequestException, NotFoundException, InternalServerErrorException,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { IsArray, ValidateNested, IsString, IsInt, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 import { JwtAuthGuard } from '../../iam/infrastructure/guards/JwtAuthGuard';
 import { GetMarketplaceProductsUseCase } from '../application/use-cases/GetMarketplaceProductsUseCase';
 import { GetMarketplaceCartUseCase } from '../application/use-cases/GetMarketplaceCartUseCase';
@@ -13,6 +15,20 @@ import { RemoveCartItemUseCase } from '../application/use-cases/RemoveCartItemUs
 import { ClearCartUseCase } from '../application/use-cases/ClearCartUseCase';
 import { AddCartItemDto } from './dto/AddCartItemDto';
 import { UpdateCartItemDto } from './dto/UpdateCartItemDto';
+
+const VTEX_BASE = 'https://easycl.vteximg.com.br/api/checkout/pub';
+
+class EasyItemDto {
+  @IsString() sku!: string;
+  @IsInt() @Min(1) quantity!: number;
+}
+
+class EasyCheckoutDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => EasyItemDto)
+  items!: EasyItemDto[];
+}
 
 @Controller('marketplace')
 export class MarketplaceController {
@@ -86,5 +102,35 @@ export class MarketplaceController {
     const user = req['user'] as any;
     await this.clearCart.executeAll(user.sub || user.id);
     return { ok: true };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('checkout/easy')
+  async easyCheckout(@Body() body: EasyCheckoutDto) {
+    try {
+      const formRes = await fetch(`${VTEX_BASE}/orderForm`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!formRes.ok) throw new Error(`VTEX orderForm error ${formRes.status}`);
+      const { orderFormId } = await formRes.json() as { orderFormId: string };
+
+      const orderItems = body.items.map(item => ({
+        id: item.sku,
+        quantity: item.quantity,
+        seller: '1',
+      }));
+
+      const addRes = await fetch(`${VTEX_BASE}/orderForm/${orderFormId}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ orderItems }),
+      });
+      if (!addRes.ok) throw new Error(`VTEX add items error ${addRes.status}`);
+
+      return { cartUrl: `https://www.easy.cl/checkout?orderFormId=${orderFormId}#/cart` };
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Error al crear carrito en Easy';
+      throw new InternalServerErrorException(msg);
+    }
   }
 }
