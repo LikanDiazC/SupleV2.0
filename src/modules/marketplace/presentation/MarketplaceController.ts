@@ -109,9 +109,12 @@ export class MarketplaceController {
   async easyCheckout(@Body() body: EasyCheckoutDto) {
     try {
       const formRes = await fetch(`${VTEX_BASE}/orderForm`, {
-        headers: { Accept: 'application/json' },
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       });
-      if (!formRes.ok) throw new Error(`VTEX orderForm error ${formRes.status}`);
+      if (!formRes.ok) {
+        const text = await formRes.text().catch(() => '');
+        throw new Error(`VTEX orderForm ${formRes.status}: ${text.slice(0, 200)}`);
+      }
       const { orderFormId } = await formRes.json() as { orderFormId: string };
 
       const orderItems = body.items.map(item => ({
@@ -125,7 +128,10 @@ export class MarketplaceController {
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ orderItems }),
       });
-      if (!addRes.ok) throw new Error(`VTEX add items error ${addRes.status}`);
+      if (!addRes.ok) {
+        const text = await addRes.text().catch(() => '');
+        throw new Error(`VTEX addItems ${addRes.status}: ${text.slice(0, 200)}`);
+      }
 
       return { cartUrl: `https://www.easy.cl/checkout?orderFormId=${orderFormId}#/cart` };
     } catch (e: unknown) {
