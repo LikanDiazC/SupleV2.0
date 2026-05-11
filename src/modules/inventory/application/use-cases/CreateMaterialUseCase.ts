@@ -1,22 +1,44 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import { IsString, IsNotEmpty, IsNumber, IsIn, IsOptional, Min } from 'class-validator';
 import type { IMaterialRepository } from '../../domain/repositories/IMaterialRepository';
 import { Material, MaterialType, GrainDirection } from '../../domain/entities/Material';
 import { TenantId } from '../../../iam/domain/value-objects/TenantId';
 
 export class CreateMaterialDto {
-  name!:         string;
-  sku!:          string;
-  materialType!: MaterialType;
-  unitOfMeasure!: string;
-  unitCost!:     number;
-  stock!:        number;
+  @IsString() @IsNotEmpty()
+  name!: string;
 
-  // Solo para SHEET:
-  sheetWidthMm?:      number;
-  sheetHeightMm?:     number;
-  thicknessMm?:       number;
-  grainDirection?:    GrainDirection;
-  kerfMm?:            number;
+  @IsString() @IsNotEmpty()
+  sku!: string;
+
+  @IsIn(['SHEET', 'HARDWARE', 'CONSUMABLE'])
+  materialType!: MaterialType;
+
+  @IsString() @IsNotEmpty()
+  unitOfMeasure!: string;
+
+  @IsNumber() @Min(0)
+  unitCost!: number;
+
+  @IsNumber() @Min(0)
+  stock!: number;
+
+  @IsOptional() @IsNumber() @Min(0)
+  sheetWidthMm?: number;
+
+  @IsOptional() @IsNumber() @Min(0)
+  sheetHeightMm?: number;
+
+  @IsOptional() @IsNumber() @Min(0)
+  thicknessMm?: number;
+
+  @IsOptional() @IsIn(['HORIZONTAL', 'VERTICAL', 'NONE'])
+  grainDirection?: GrainDirection;
+
+  @IsOptional() @IsNumber() @Min(0)
+  kerfMm?: number;
+
+  @IsOptional() @IsNumber() @Min(0)
   minRemnantAreaMm2?: number;
 }
 
