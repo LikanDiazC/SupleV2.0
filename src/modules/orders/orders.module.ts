@@ -13,20 +13,18 @@ import { DeliverOrderUseCase } from './application/use-cases/DeliverOrderUseCase
 import { ShipOrderUseCase } from './application/use-cases/ShipOrderUseCase';
 import { GetOrdersUseCase } from './application/use-cases/GetOrdersUseCase';
 import { GetOrderByIdUseCase } from './application/use-cases/GetOrderByIdUseCase';
+import { UpdateOrderStatusUseCase } from './application/use-cases/UpdateOrderStatusUseCase';
+import { OrderNotificationsModule } from '../order-notifications/OrderNotificationsModule';
 
 @Module({
-  // 👇 Aquí van los módulos
   imports: [
     TypeOrmModule.forFeature([OrderOrmEntity]),
     InventoryModule,
-    ManufacturingModule
+    ManufacturingModule,
+    OrderNotificationsModule,
   ],
-  // 👇 Aquí van los Casos de Uso y Repositorios
   providers: [
-    {
-      provide: 'IOrderRepository',
-      useClass: TypeOrmOrderRepository,
-    },
+    { provide: 'IOrderRepository', useClass: TypeOrmOrderRepository },
     ReceiveExternalOrderUseCase,
     CheckOrderStockUseCase,
     StartOrderProductionUseCase,
@@ -35,6 +33,7 @@ import { GetOrderByIdUseCase } from './application/use-cases/GetOrderByIdUseCase
     DeliverOrderUseCase,
     GetOrdersUseCase,
     GetOrderByIdUseCase,
+    UpdateOrderStatusUseCase,
   ],
   controllers: [OrdersController],
   exports: ['IOrderRepository', CheckOrderStockUseCase],

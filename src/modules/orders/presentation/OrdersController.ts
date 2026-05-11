@@ -1,4 +1,7 @@
-import { Controller, Post, Body, Req, UseGuards, Param, Patch, Get, Query, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
+import {
+  Controller, Post, Body, Req, UseGuards, Param,
+  Patch, Get, Query, ParseIntPipe, DefaultValuePipe, Delete,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../iam/infrastructure/guards/JwtAuthGuard';
 import { ReceiveExternalOrderUseCase, ExternalOrderDto } from '../application/use-cases/ReceiveExternalOrderUseCase';
@@ -9,10 +12,12 @@ import { ShipOrderUseCase } from '../application/use-cases/ShipOrderUseCase';
 import { DeliverOrderUseCase } from '../application/use-cases/DeliverOrderUseCase';
 import { GetOrdersUseCase } from '../application/use-cases/GetOrdersUseCase';
 import { GetOrderByIdUseCase } from '../application/use-cases/GetOrderByIdUseCase';
+import { UpdateOrderStatusUseCase, UpdateOrderStatusDto } from '../application/use-cases/UpdateOrderStatusUseCase';
+import { MarkNotificationStepUseCase } from '../../order-notifications/application/use-cases/MarkNotificationStepUseCase';
+import { UnmarkNotificationStepUseCase } from '../../order-notifications/application/use-cases/UnmarkNotificationStepUseCase';
+import { GetOrderNotificationsUseCase } from '../../order-notifications/application/use-cases/GetOrderNotificationsUseCase';
 
-// ...
-
-@Controller('orders') // URL: http://localhost:3000/orders
+@Controller('orders')
 export class OrdersController {
   constructor(
     private readonly receiveExternalOrderUseCase: ReceiveExternalOrderUseCase,
@@ -23,6 +28,10 @@ export class OrdersController {
     private readonly deliverOrderUseCase: DeliverOrderUseCase,
     private readonly getOrdersUseCase: GetOrdersUseCase,
     private readonly getOrderByIdUseCase: GetOrderByIdUseCase,
+    private readonly updateOrderStatusUseCase: UpdateOrderStatusUseCase,
+    private readonly markNotifStepUseCase: MarkNotificationStepUseCase,
+    private readonly unmarkNotifStepUseCase: UnmarkNotificationStepUseCase,
+    private readonly getOrderNotificationsUseCase: GetOrderNotificationsUseCase,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -36,22 +45,18 @@ export class OrdersController {
     return await this.getOrdersUseCase.execute(userPayload.tenantId, limit, offset);
   }
 
-  // 👇 RUTA PARA OBTENER UNA ORDEN ESPECÍFICA
   @UseGuards(JwtAuthGuard)
-  @Get(':id') // URL: http://localhost:3000/orders/ID
+  @Get(':id')
   async getOrderById(@Param('id') orderId: string, @Req() request: Request) {
     const userPayload = request['user'] as any;
     return await this.getOrderByIdUseCase.execute(userPayload.tenantId, orderId);
   }
-  // En la vida real, este endpoint podría tener una autenticación especial (API Keys) 
-  // para Shopify. Por ahora usaremos tu JWT estándar.
+
   @UseGuards(JwtAuthGuard)
   @Post()
   async receiveOrder(@Body() dto: ExternalOrderDto, @Req() request: Request) {
     const userPayload = request['user'] as any;
-    
     const result = await this.receiveExternalOrderUseCase.execute(userPayload.tenantId, dto);
-
     return {
       message: 'Orden recibida y stock verificado automáticamente.',
       id:        result.id,
@@ -61,77 +66,94 @@ export class OrdersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Patch(':id/check-stock') // URL: http://localhost:3000/orders/ID_DE_LA_ORDEN/check-stock
+  @Patch(':id/check-stock')
   async checkStock(@Param('id') orderId: string, @Req() request: Request) {
     const userPayload = request['user'] as any;
-    
     const newStatus = await this.checkOrderStockUseCase.execute(userPayload.tenantId, orderId);
-    
-    return { 
-      message: 'Evaluación de inventario completada.',
-      status: newStatus
-    };
+    return { message: 'Evaluación de inventario completada.', status: newStatus };
   }
-  /////////////////////////////////
+
   @UseGuards(JwtAuthGuard)
-  @Patch(':id/start-production') // URL: http://localhost:3000/orders/ID/start-production
+  @Patch(':id/start-production')
   async startProduction(@Param('id') orderId: string, @Req() request: Request) {
     const userPayload = request['user'] as any;
-    const userId = userPayload.sub || userPayload.id; // Necesitamos el ID del operario
-    
-    const newStatus = await this.startOrderProductionUseCase.execute(
-      userPayload.tenantId, 
-      orderId, 
-      userId
-    );
-    
-    return { 
-      message: 'Producción iniciada. Materiales descontados de la bodega con éxito.',
-      status: newStatus
-    };
+    const userId = userPayload.sub || userPayload.id;
+    const newStatus = await this.startOrderProductionUseCase.execute(userPayload.tenantId, orderId, userId);
+    return { message: 'Producción iniciada. Materiales descontados de la bodega con éxito.', status: newStatus };
   }
-  ///////////////////////
+
   @UseGuards(JwtAuthGuard)
-  @Patch(':id/complete-production') // URL: http://localhost:3000/orders/ID/complete-production
+  @Patch(':id/complete-production')
   async completeProduction(@Param('id') orderId: string, @Req() request: Request) {
     const userPayload = request['user'] as any;
     const userId = userPayload.sub || userPayload.id;
-    
-    const newStatus = await this.completeOrderProductionUseCase.execute(
-      userPayload.tenantId, 
-      orderId, 
-      userId
-    );
-    
-    return { 
-      message: '¡Orden completada! Los productos terminados se han sumado al inventario.',
-      status: newStatus
-    };
+    const newStatus = await this.completeOrderProductionUseCase.execute(userPayload.tenantId, orderId, userId);
+    return { message: '¡Orden completada! Los productos terminados se han sumado al inventario.', status: newStatus };
   }
-  ///////////////////////
+
   @UseGuards(JwtAuthGuard)
-  @Patch(':id/ship') // URL: http://localhost:3000/orders/ID/ship
+  @Patch(':id/ship')
   async shipOrder(@Param('id') orderId: string, @Req() request: Request) {
     const userPayload = request['user'] as any;
-    
     const newStatus = await this.shipOrderUseCase.execute(userPayload.tenantId, orderId);
-    
-    return { 
-      message: '¡El paquete está en camino! La orden ha sido enviada.',
-      status: newStatus
-    };
+    return { message: '¡El paquete está en camino! La orden ha sido enviada.', status: newStatus };
   }
-  /////////////////////////
+
   @UseGuards(JwtAuthGuard)
-  @Patch(':id/deliver') // URL: http://localhost:3000/orders/ID/deliver
+  @Patch(':id/deliver')
   async deliverOrder(@Param('id') orderId: string, @Req() request: Request) {
     const userPayload = request['user'] as any;
-    
     const newStatus = await this.deliverOrderUseCase.execute(userPayload.tenantId, orderId);
-    
-    return { 
-      message: '¡Misión cumplida! El cliente ha recibido su pedido. Ciclo finalizado.',
-      status: newStatus
-    };
+    return { message: '¡Misión cumplida! El cliente ha recibido su pedido. Ciclo finalizado.', status: newStatus };
+  }
+
+  // ── Tenant-aware status update ───────────────────────────────────────────
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/status')
+  async updateStatus(
+    @Param('id') orderId: string,
+    @Body() dto: UpdateOrderStatusDto,
+    @Req() request: Request,
+  ) {
+    const { tenantId } = request['user'] as any;
+    const newStatus = await this.updateOrderStatusUseCase.execute(tenantId, orderId, dto.status);
+    return { status: newStatus };
+  }
+
+  // ── Notification step tracking ───────────────────────────────────────────
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/notify/:step')
+  async markNotifStep(
+    @Param('id') orderId: string,
+    @Param('step') step: string,
+    @Req() request: Request,
+  ) {
+    const { tenantId, sub } = request['user'] as any;
+    await this.markNotifStepUseCase.execute(orderId, tenantId, step, sub);
+    return { marked: true, step };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id/notify/:step')
+  async unmarkNotifStep(
+    @Param('id') orderId: string,
+    @Param('step') step: string,
+    @Req() request: Request,
+  ) {
+    const { tenantId } = request['user'] as any;
+    await this.unmarkNotifStepUseCase.execute(orderId, tenantId, step);
+    return { marked: false, step };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/notifications')
+  async getOrderNotifications(
+    @Param('id') orderId: string,
+    @Req() request: Request,
+  ) {
+    const { tenantId } = request['user'] as any;
+    return this.getOrderNotificationsUseCase.executeForOrder(orderId, tenantId);
   }
 }

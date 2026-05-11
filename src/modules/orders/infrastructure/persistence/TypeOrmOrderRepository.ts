@@ -58,17 +58,38 @@ export class TypeOrmOrderRepository implements IOrderRepository {
       skip: offset,
     });
 
-    return ormEntities.map(orm => Order.load({
-      tenantId: new TenantId(orm.tenantId),
-      externalReference: orm.externalReference,
-      customerName: orm.customerName,
-      status: orm.status as any,
-      items: orm.items.map((i: any) => ({
-        productId: new UniqueId(i.productId),
-        quantity: i.quantity,
-      })),
-      createdAt: orm.createdAt,
-      updatedAt: orm.updatedAt,
-    }, new UniqueId(orm.id)));
+    return ormEntities.map(orm => {
+      const order = Order.load({
+        tenantId: new TenantId(orm.tenantId),
+        externalReference: orm.externalReference,
+        customerName: orm.customerName,
+        status: orm.status as any,
+        items: orm.items.map((i: any) => ({
+          productId: new UniqueId(i.productId),
+          quantity: i.quantity,
+        })),
+        createdAt: orm.createdAt,
+        updatedAt: orm.updatedAt,
+      }, new UniqueId(orm.id));
+
+      // Attach extra fields for projection in use cases
+      Object.assign(order, {
+        orderType:       orm.orderType,
+        description:     orm.description,
+        fechaConfeccion: orm.fechaConfeccion,
+        fechaEntrega:    orm.fechaEntrega,
+        horario:         orm.horario,
+        comuna:          orm.comuna,
+        color:           orm.color,
+        mesVenta:        orm.mesVenta,
+        extraData:       orm.extraData,
+      });
+
+      return order;
+    });
+  }
+
+  async updateStatus(id: string, tenantId: string, status: string): Promise<void> {
+    await this.ormRepository.update({ id, tenantId }, { status });
   }
 }
