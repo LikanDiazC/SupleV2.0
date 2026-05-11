@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type { ITenantConfigRepository } from '../../domain/repositories/ITenantConfigRepository';
+import type { ITenantConfigRepository, TenantConfigWithName } from '../../domain/repositories/ITenantConfigRepository';
 import { TenantConfig } from '../../domain/entities/TenantConfig';
 
 @Injectable()
@@ -12,5 +12,9 @@ export class GetTenantConfigUseCase {
   async execute(tenantId: string): Promise<TenantConfig> {
     const config = await this.repo.findByTenantId(tenantId);
     return config ?? TenantConfig.empty(tenantId);
+  }
+
+  async executeAll(): Promise<TenantConfigWithName[]> {
+    return this.repo.findAll();
   }
 }

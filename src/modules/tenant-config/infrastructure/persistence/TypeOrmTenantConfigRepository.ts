@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TenantConfigOrmEntity } from './TenantConfigOrmEntity';
-import { ITenantConfigRepository } from '../../domain/repositories/ITenantConfigRepository';
+import type { ITenantConfigRepository, TenantConfigWithName } from '../../domain/repositories/ITenantConfigRepository';
 import { TenantConfig } from '../../domain/entities/TenantConfig';
 
 @Injectable()
@@ -22,5 +22,21 @@ export class TypeOrmTenantConfigRepository implements ITenantConfigRepository {
       row.extraFields,
       row.notifSteps,
     );
+  }
+
+  async findAll(): Promise<TenantConfigWithName[]> {
+    const rows: any[] = await this.repo.query(`
+      SELECT
+        t.id            AS "tenantId",
+        t.name          AS "tenantName",
+        COALESCE(tc."orderTypes",    '[]'::jsonb) AS "orderTypes",
+        COALESCE(tc."orderStatuses", '[]'::jsonb) AS "orderStatuses",
+        COALESCE(tc."extraFields",   '[]'::jsonb) AS "extraFields",
+        COALESCE(tc."notifSteps",    '[]'::jsonb) AS "notifSteps"
+      FROM tenants t
+      LEFT JOIN tenant_config tc ON tc."tenantId" = t.id
+      ORDER BY t.name
+    `);
+    return rows;
   }
 }

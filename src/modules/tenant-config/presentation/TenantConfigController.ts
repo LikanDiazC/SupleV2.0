@@ -19,4 +19,10 @@ export class TenantConfigController {
       notifSteps:    config.notifSteps,
     };
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('configs')
+  async getAllConfigs() {
+    return this.getTenantConfigUseCase.executeAll();
+  }
 }
