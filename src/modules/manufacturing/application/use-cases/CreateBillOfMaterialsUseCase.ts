@@ -1,4 +1,9 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import {
+  IsString, IsNotEmpty, IsNumber, IsArray, IsUUID,
+  ArrayMinSize, ValidateNested, Min,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import type { IBillOfMaterialsRepository } from '../../domain/repositories/IBillOfMaterialsRepository';
 import { BillOfMaterials } from '../../domain/entities/BillOfMaterials';
 import { UniqueId } from '../../../../shared/kernel/UniqueId';
@@ -6,13 +11,24 @@ import { TenantId } from '../../../iam/domain/value-objects/TenantId';
 
 // DTOs para estructurar lo que recibimos del cliente
 export class CreateBomComponentDto {
+  @IsUUID()
   itemId!: string;
+
+  @IsNumber() @Min(0.0001)
   quantity!: number;
 }
 
 export class CreateBomDto {
+  @IsUUID()
   productId!: string;
+
+  @IsString() @IsNotEmpty()
   name!: string;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => CreateBomComponentDto)
   components!: CreateBomComponentDto[];
 }
 

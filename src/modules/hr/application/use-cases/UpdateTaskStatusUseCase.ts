@@ -1,4 +1,5 @@
 import { Injectable, Inject, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { IsEnum } from 'class-validator';
 import type { IEmployeeRepository } from '../../domain/repositories/IEmployeeRepository';
 import type { ITaskRepository } from '../../domain/repositories/ITaskRepository';
 import { EmployeeId } from '../../domain/value-objects/EmployeeId';
@@ -7,6 +8,7 @@ import { TaskStatus } from '../../domain/value-objects/TaskStatus';
 import { UniqueId } from '../../../../shared/kernel/UniqueId';
 
 export class UpdateTaskStatusDto {
+  @IsEnum(TaskStatus)
   status!: TaskStatus;
 }
 

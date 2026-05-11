@@ -1,27 +1,54 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import {
+  IsString, IsNotEmpty, IsNumber, IsOptional, IsArray, IsUUID,
+  IsIn, ArrayMinSize, ValidateNested, Min,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import type { IBillOfMaterialsRepository } from '../../domain/repositories/IBillOfMaterialsRepository';
 import type { IBomComponentRepository } from '../../domain/repositories/IBomComponentRepository';
 import type { IProductRepository } from '../../../inventory/domain/repositories/IProductRepository';
 import { BillOfMaterials } from '../../domain/entities/BillOfMaterials';
-import { BomComponent, GrainRequirement } from '../../domain/entities/BomComponent';
+import { BomComponent } from '../../domain/entities/BomComponent';
+import type { GrainRequirement } from '../../domain/entities/BomComponent';
 import { Product } from '../../../inventory/domain/entities/Product';
 import { UniqueId } from '../../../../shared/kernel/UniqueId';
 import { TenantId } from '../../../iam/domain/value-objects/TenantId';
 
 export class CreateBomComponentDto {
-  materialId!:       string;
-  quantity!:         number;
-  pieceWidthMm?:     number;
-  pieceHeightMm?:    number;
+  @IsUUID()
+  materialId!: string;
+
+  @IsNumber() @Min(0.0001)
+  quantity!: number;
+
+  @IsOptional() @IsNumber() @Min(0)
+  pieceWidthMm?: number;
+
+  @IsOptional() @IsNumber() @Min(0)
+  pieceHeightMm?: number;
+
+  @IsOptional() @IsIn(['FOLLOW', 'CROSS', 'ANY'])
   grainRequirement?: GrainRequirement;
-  pieceLabel?:       string;
+
+  @IsOptional() @IsString()
+  pieceLabel?: string;
 }
 
 export class CreateBomWithComponentsDto {
-  name!:         string;
-  productName!:  string;
-  productSku?:   string;
-  components!:   CreateBomComponentDto[];
+  @IsString() @IsNotEmpty()
+  name!: string;
+
+  @IsString() @IsNotEmpty()
+  productName!: string;
+
+  @IsOptional() @IsString()
+  productSku?: string;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => CreateBomComponentDto)
+  components!: CreateBomComponentDto[];
 }
 
 @Injectable()

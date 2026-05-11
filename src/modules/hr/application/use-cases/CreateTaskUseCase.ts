@@ -1,4 +1,5 @@
 import { Injectable, Inject, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { IsString, IsNotEmpty, IsOptional, IsUUID, IsDateString } from 'class-validator';
 import type { IEmployeeRepository } from '../../domain/repositories/IEmployeeRepository';
 import type { ITaskRepository } from '../../domain/repositories/ITaskRepository';
 import { Task } from '../../domain/entities/Task';
@@ -6,10 +7,17 @@ import { EmployeeId } from '../../domain/value-objects/EmployeeId';
 import { UniqueId } from '../../../../shared/kernel/UniqueId';
 
 export class CreateTaskDto {
-  title!:        string;
-  description?:  string;
+  @IsString() @IsNotEmpty()
+  title!: string;
+
+  @IsOptional() @IsString()
+  description?: string;
+
+  @IsUUID()
   assignedToId!: string;
-  dueDate?:      string;
+
+  @IsOptional() @IsDateString()
+  dueDate?: string;
 }
 
 @Injectable()

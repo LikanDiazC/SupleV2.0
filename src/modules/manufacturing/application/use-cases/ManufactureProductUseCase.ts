@@ -1,4 +1,5 @@
 import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
+import { IsUUID, IsNumber, IsInt, Min } from 'class-validator';
 import type { IBillOfMaterialsRepository } from '../../domain/repositories/IBillOfMaterialsRepository';
 import type { IBomComponentRepository } from '../../domain/repositories/IBomComponentRepository';
 import type { ICuttingPlanRepository } from '../../domain/repositories/ICuttingPlanRepository';
@@ -16,9 +17,14 @@ import { BomComponent } from '../../domain/entities/BomComponent';
 import { Material } from '../../../inventory/domain/entities/Material';
 
 export class ManufactureRequestDto {
+  @IsUUID()
   productId!: string;
-  orderId!:   string;
-  quantity!:  number;
+
+  @IsUUID()
+  orderId!: string;
+
+  @IsInt() @Min(1)
+  quantity!: number;
 }
 
 @Injectable()
