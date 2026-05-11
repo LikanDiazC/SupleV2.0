@@ -29,8 +29,11 @@ export class Material {
   ) {}
 
   public static create(props: MaterialProps, id?: UniqueId): Material {
-    if (props.stock < 0)    throw new Error('El stock inicial no puede ser negativo.');
-    if (props.unitCost < 0) throw new Error('El costo no puede ser negativo.');
+    if (!props.name?.trim())         throw new Error('El nombre es requerido.');
+    if (!props.sku?.trim())          throw new Error('El SKU es requerido.');
+    if (!props.unitOfMeasure?.trim()) throw new Error('La unidad de medida es requerida.');
+    if (props.stock < 0)             throw new Error('El stock inicial no puede ser negativo.');
+    if (props.unitCost < 0)          throw new Error('El costo no puede ser negativo.');
 
     if (props.materialType === 'SHEET') {
       if (!props.sheetWidthMm || !props.sheetHeightMm || !props.thicknessMm) {
