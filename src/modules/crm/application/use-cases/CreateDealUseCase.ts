@@ -1,4 +1,6 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, IsArray, IsUUID, ValidateNested, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 import type { IDealRepository } from '../../domain/repositories/IDealRepository';
 import type { IDealActivityRepository } from '../../domain/repositories/IDealActivityRepository';
 import { Deal } from '../../domain/entities/Deal';
@@ -6,18 +8,29 @@ import { DealActivity } from '../../domain/entities/DealActivity';
 import { UniqueId } from '../../../../shared/kernel/UniqueId';
 import { TenantId } from '../../../iam/domain/value-objects/TenantId';
 
-// 👇 NUEVO DTO
 export class CreateDealItemDto {
-  bomId!:    string;
+  @IsUUID()
+  bomId!: string;
+
+  @IsNumber() @Min(1)
   quantity!: number;
 }
 
 export class CreateDealDto {
+  @IsString() @IsNotEmpty()
   name!: string;
+
+  @IsNumber() @Min(0)
   amount!: number;
+
+  @IsOptional() @IsUUID()
   companyId?: string;
+
+  @IsOptional() @IsUUID()
   contactId?: string;
-  items?: CreateDealItemDto[]; // 👈 Puede venir con o sin carrito
+
+  @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => CreateDealItemDto)
+  items?: CreateDealItemDto[];
 }
 
 @Injectable()

@@ -1,7 +1,9 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { IsString, IsNotEmpty } from 'class-validator';
 import type { IOrderRepository } from '../../domain/repositories/IOrderRepository';
 
 export class UpdateOrderStatusDto {
+  @IsString() @IsNotEmpty()
   status!: string;
 }
 

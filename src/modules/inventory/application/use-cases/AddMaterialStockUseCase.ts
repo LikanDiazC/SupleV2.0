@@ -1,4 +1,5 @@
 import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
+import { IsNumber, IsString, IsNotEmpty, Min } from 'class-validator';
 import type { IMaterialRepository } from '../../domain/repositories/IMaterialRepository';
 import type { IInventoryMovementRepository } from '../../domain/repositories/IInventoryMovementRepository';
 import { InventoryMovement } from '../../domain/entities/InventoryMovement';
@@ -6,8 +7,11 @@ import { UniqueId } from '../../../../shared/kernel/UniqueId';
 import { TenantId } from '../../../iam/domain/value-objects/TenantId';
 
 export class AddMaterialStockDto {
+  @IsNumber() @Min(0.0001)
   quantity!: number;
-  reason!:   string;
+
+  @IsString() @IsNotEmpty()
+  reason!: string;
 }
 
 @Injectable()

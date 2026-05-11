@@ -16,7 +16,7 @@ export class DeliverOrderUseCase {
       // Avanzamos el estado final (El dominio verifica que esté en SHIPPED)
       order.deliverOrder();
       
-      await this.orderRepository.save(order);
+      await this.orderRepository.updateStatus(order.id.value, tenantId, order.status);
       return order.status;
     } catch (error: any) {
       throw new BadRequestException(error.message);

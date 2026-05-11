@@ -14,6 +14,7 @@ import { ShipOrderUseCase } from './application/use-cases/ShipOrderUseCase';
 import { GetOrdersUseCase } from './application/use-cases/GetOrdersUseCase';
 import { GetOrderByIdUseCase } from './application/use-cases/GetOrderByIdUseCase';
 import { UpdateOrderStatusUseCase } from './application/use-cases/UpdateOrderStatusUseCase';
+import { UpdateOrderFieldsUseCase } from './application/use-cases/UpdateOrderFieldsUseCase';
 import { OrderNotificationsModule } from '../order-notifications/OrderNotificationsModule';
 
 @Module({
@@ -34,6 +35,7 @@ import { OrderNotificationsModule } from '../order-notifications/OrderNotificati
     GetOrdersUseCase,
     GetOrderByIdUseCase,
     UpdateOrderStatusUseCase,
+    UpdateOrderFieldsUseCase,
   ],
   controllers: [OrdersController],
   exports: ['IOrderRepository', CheckOrderStockUseCase],

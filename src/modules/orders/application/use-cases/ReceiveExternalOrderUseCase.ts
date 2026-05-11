@@ -1,4 +1,6 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import { IsString, IsNotEmpty, IsArray, IsNumber, Min, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import type { IOrderRepository } from '../../domain/repositories/IOrderRepository';
 import { Order } from '../../domain/entities/Order';
 import { UniqueId } from '../../../../shared/kernel/UniqueId';
@@ -6,13 +8,21 @@ import { TenantId } from '../../../iam/domain/value-objects/TenantId';
 import { CheckOrderStockUseCase } from './CheckOrderStockUseCase';
 
 export class ExternalOrderItemDto {
+  @IsString() @IsNotEmpty()
   productId!: string;
+
+  @IsNumber() @Min(1)
   quantity!: number;
 }
 
 export class ExternalOrderDto {
+  @IsString() @IsNotEmpty()
   externalReference!: string;
+
+  @IsString() @IsNotEmpty()
   customerName!: string;
+
+  @IsArray() @ValidateNested({ each: true }) @Type(() => ExternalOrderItemDto)
   items!: ExternalOrderItemDto[];
 }
 

@@ -112,7 +112,7 @@ export class StartOrderProductionUseCase {
         );
       }
 
-      await this.orderRepository.save(order);
+      await this.orderRepository.updateStatus(order.id.value, tenantId, order.status);
       return order.status;
 
     } catch (error: any) {

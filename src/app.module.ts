@@ -33,7 +33,7 @@ import { TenantConfigModule } from './modules/tenant-config/TenantConfigModule';
       database: process.env.DB_NAME,
       ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
       autoLoadEntities: true,
-      synchronize: process.env.NODE_ENV !== 'production',
+      synchronize: false,
       entities: [UserOrmEntity, TenantOrmEntity],
     }),
     IamModule,

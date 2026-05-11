@@ -39,7 +39,7 @@ export class CheckOrderStockUseCase {
       const bom = await this.bomRepository.findByProductId(item.productId.value, tenantId);
       if (!bom) {
         order.putOnHoldForMaterials();
-        await this.orderRepository.save(order);
+        await this.orderRepository.updateStatus(order.id.value, tenantId, order.status);
         return order.status;
       }
 
@@ -62,7 +62,7 @@ export class CheckOrderStockUseCase {
 
       if (effectiveComponents.length === 0) {
         order.putOnHoldForMaterials();
-        await this.orderRepository.save(order);
+        await this.orderRepository.updateStatus(order.id.value, tenantId, order.status);
         return order.status;
       }
 
@@ -71,7 +71,7 @@ export class CheckOrderStockUseCase {
           const material = await this.materialRepository.findById(comp.materialId, tenantId);
           if (!material) {
             order.putOnHoldForMaterials();
-            await this.orderRepository.save(order);
+            await this.orderRepository.updateStatus(order.id.value, tenantId, order.status);
             return order.status;
           }
           needs.set(comp.materialId, { material, totalPieceAreaMm2: 0, totalQuantity: 0 });
@@ -100,20 +100,20 @@ export class CheckOrderStockUseCase {
           : totalQuantity; // fallback if no dimensions
         if (material.stock < sheetsNeeded) {
           order.putOnHoldForMaterials();
-          await this.orderRepository.save(order);
+          await this.orderRepository.updateStatus(order.id.value, tenantId, order.status);
           return order.status;
         }
       } else {
         if (material.stock < totalQuantity) {
           order.putOnHoldForMaterials();
-          await this.orderRepository.save(order);
+          await this.orderRepository.updateStatus(order.id.value, tenantId, order.status);
           return order.status;
         }
       }
     }
 
     order.markAsReadyToStart();
-    await this.orderRepository.save(order);
+    await this.orderRepository.updateStatus(order.id.value, tenantId, order.status);
     return order.status;
   }
 }

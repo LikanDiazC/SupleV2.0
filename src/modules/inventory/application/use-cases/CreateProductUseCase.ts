@@ -1,14 +1,24 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, Min } from 'class-validator';
 import type { IProductRepository } from '../../domain/repositories/IProductRepository';
 import { Product } from '../../domain/entities/Product';
 import { TenantId } from '../../../iam/domain/value-objects/TenantId';
 
 export class CreateProductDto {
-  name!:        string;
-  sku!:         string;
+  @IsString() @IsNotEmpty()
+  name!: string;
+
+  @IsString() @IsNotEmpty()
+  sku!: string;
+
+  @IsOptional() @IsString()
   description?: string;
-  salePrice?:   number;
-  stock!:       number;
+
+  @IsOptional() @IsNumber() @Min(0)
+  salePrice?: number;
+
+  @IsNumber() @Min(0)
+  stock!: number;
 }
 
 export interface ProductResponseDto {

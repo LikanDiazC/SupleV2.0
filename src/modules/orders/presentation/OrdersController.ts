@@ -13,6 +13,7 @@ import { DeliverOrderUseCase } from '../application/use-cases/DeliverOrderUseCas
 import { GetOrdersUseCase } from '../application/use-cases/GetOrdersUseCase';
 import { GetOrderByIdUseCase } from '../application/use-cases/GetOrderByIdUseCase';
 import { UpdateOrderStatusUseCase, UpdateOrderStatusDto } from '../application/use-cases/UpdateOrderStatusUseCase';
+import { UpdateOrderFieldsUseCase, UpdateOrderFieldsDto } from '../application/use-cases/UpdateOrderFieldsUseCase';
 import { MarkNotificationStepUseCase } from '../../order-notifications/application/use-cases/MarkNotificationStepUseCase';
 import { UnmarkNotificationStepUseCase } from '../../order-notifications/application/use-cases/UnmarkNotificationStepUseCase';
 import { GetOrderNotificationsUseCase } from '../../order-notifications/application/use-cases/GetOrderNotificationsUseCase';
@@ -29,6 +30,7 @@ export class OrdersController {
     private readonly getOrdersUseCase: GetOrdersUseCase,
     private readonly getOrderByIdUseCase: GetOrderByIdUseCase,
     private readonly updateOrderStatusUseCase: UpdateOrderStatusUseCase,
+    private readonly updateOrderFieldsUseCase: UpdateOrderFieldsUseCase,
     private readonly markNotifStepUseCase: MarkNotificationStepUseCase,
     private readonly unmarkNotifStepUseCase: UnmarkNotificationStepUseCase,
     private readonly getOrderNotificationsUseCase: GetOrderNotificationsUseCase,
@@ -105,6 +107,20 @@ export class OrdersController {
     const userPayload = request['user'] as any;
     const newStatus = await this.deliverOrderUseCase.execute(userPayload.tenantId, orderId);
     return { message: '¡Misión cumplida! El cliente ha recibido su pedido. Ciclo finalizado.', status: newStatus };
+  }
+
+  // ── Cercha fields update ─────────────────────────────────────────────────
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/fields')
+  async updateFields(
+    @Param('id') orderId: string,
+    @Body() dto: UpdateOrderFieldsDto,
+    @Req() request: Request,
+  ) {
+    const { tenantId } = request['user'] as any;
+    await this.updateOrderFieldsUseCase.execute(tenantId, orderId, dto);
+    return { updated: true };
   }
 
   // ── Tenant-aware status update ───────────────────────────────────────────

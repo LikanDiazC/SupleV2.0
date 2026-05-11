@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IOrderRepository } from '../../domain/repositories/IOrderRepository';
+import { IOrderRepository, OrderFields } from '../../domain/repositories/IOrderRepository';
 import { Order } from '../../domain/entities/Order';
 import { OrderOrmEntity } from './OrderOrmEntity';
 import { UniqueId } from '../../../../shared/kernel/UniqueId';
@@ -91,5 +91,21 @@ export class TypeOrmOrderRepository implements IOrderRepository {
 
   async updateStatus(id: string, tenantId: string, status: string): Promise<void> {
     await this.ormRepository.update({ id, tenantId }, { status });
+  }
+
+  async updateFields(id: string, tenantId: string, fields: OrderFields): Promise<void> {
+    const update: Partial<OrderOrmEntity> = {};
+    if ('orderType'       in fields) update.orderType       = fields.orderType       ?? null;
+    if ('description'     in fields) update.description     = fields.description     ?? null;
+    if ('fechaConfeccion' in fields) update.fechaConfeccion = fields.fechaConfeccion ?? null;
+    if ('fechaEntrega'    in fields) update.fechaEntrega    = fields.fechaEntrega    ?? null;
+    if ('horario'         in fields) update.horario         = fields.horario         ?? null;
+    if ('comuna'          in fields) update.comuna          = fields.comuna          ?? null;
+    if ('color'           in fields) update.color           = fields.color           ?? null;
+    if ('mesVenta'        in fields) update.mesVenta        = fields.mesVenta        ?? null;
+    if ('extraData'       in fields) update.extraData       = fields.extraData       ?? null;
+    if (Object.keys(update).length > 0) {
+      await this.ormRepository.update({ id, tenantId }, update);
+    }
   }
 }

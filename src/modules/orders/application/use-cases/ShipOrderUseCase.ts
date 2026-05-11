@@ -16,7 +16,7 @@ export class ShipOrderUseCase {
       // Avanzamos el estado (El dominio verifica que esté en MANUFACTURED)
       order.shipOrder();
       
-      await this.orderRepository.save(order);
+      await this.orderRepository.updateStatus(order.id.value, tenantId, order.status);
       return order.status;
     } catch (error: any) {
       throw new BadRequestException(error.message);
