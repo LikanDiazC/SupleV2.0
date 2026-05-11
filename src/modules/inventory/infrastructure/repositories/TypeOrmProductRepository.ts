@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { IProductRepository } from '../../domain/repositories/IProductRepository';
 import { Product } from '../../domain/entities/Product';
 import { ProductOrmEntity } from '../persistence/ProductOrmEntity';
@@ -36,6 +36,12 @@ export class TypeOrmProductRepository implements IProductRepository {
   async findById(id: string, tenantId: string): Promise<Product | null> {
     const row = await this.orm.findOne({ where: { id, tenantId } });
     return row ? this.toDomain(row) : null;
+  }
+
+  async findByIds(ids: string[], tenantId: string): Promise<Product[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.orm.find({ where: { id: In(ids), tenantId } });
+    return rows.map((r) => this.toDomain(r));
   }
 
   async findBySku(sku: string, tenantId: string): Promise<Product | null> {

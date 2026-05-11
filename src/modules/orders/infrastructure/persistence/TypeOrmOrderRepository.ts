@@ -36,7 +36,7 @@ export class TypeOrmOrderRepository implements IOrderRepository {
     const orm = await this.ormRepository.findOne({ where: { id, tenantId } });
     if (!orm) return null;
 
-    return Order.load({
+    const order = Order.load({
       tenantId: new TenantId(orm.tenantId),
       externalReference: orm.externalReference,
       customerName: orm.customerName,
@@ -48,6 +48,20 @@ export class TypeOrmOrderRepository implements IOrderRepository {
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
     }, new UniqueId(orm.id));
+
+    Object.assign(order, {
+      orderType:       orm.orderType,
+      description:     orm.description,
+      fechaConfeccion: orm.fechaConfeccion,
+      fechaEntrega:    orm.fechaEntrega,
+      horario:         orm.horario,
+      comuna:          orm.comuna,
+      color:           orm.color,
+      mesVenta:        orm.mesVenta,
+      extraData:       orm.extraData,
+    });
+
+    return order;
   }
 
   async findAll(tenantId: string, limit = 200, offset = 0): Promise<Order[]> {

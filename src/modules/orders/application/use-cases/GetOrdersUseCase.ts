@@ -18,17 +18,16 @@ export class GetOrdersUseCase {
     const orderIds = orders.map(o => o.id.value);
     const notifMap = await this.getNotificationsUseCase.executeForOrders(orderIds, tenantId);
 
-    return Promise.all(
-      orders.map(async (order) => {
-        const firstItem = order.items[0];
-        let productName: string | undefined;
-        let quantity: number | undefined;
+    const firstItemProductIds = [...new Set(
+      orders.map(o => o.items[0]?.productId.value).filter(Boolean) as string[],
+    )];
+    const products = await this.productRepository.findByIds(firstItemProductIds, tenantId);
+    const productMap = new Map(products.map(p => [p.id.value, p]));
 
-        if (firstItem) {
-          const product = await this.productRepository.findById(firstItem.productId.value, tenantId);
-          productName = product?.name;
-          quantity    = firstItem.quantity;
-        }
+    return orders.map((order) => {
+        const firstItem = order.items[0];
+        const productName = firstItem ? productMap.get(firstItem.productId.value)?.name : undefined;
+        const quantity    = firstItem?.quantity;
 
         const id = order.id.value;
         return {
@@ -57,7 +56,6 @@ export class GetOrdersUseCase {
           createdAt:       order.createdAt,
           updatedAt:       order.updatedAt,
         };
-      }),
-    );
+      });
   }
 }

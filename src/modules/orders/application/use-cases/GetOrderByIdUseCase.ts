@@ -1,6 +1,7 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import type { IOrderRepository } from '../../domain/repositories/IOrderRepository';
 import type { IProductRepository } from '../../../inventory/domain/repositories/IProductRepository';
+import { GetOrderNotificationsUseCase } from '../../../order-notifications/application/use-cases/GetOrderNotificationsUseCase';
 
 @Injectable()
 export class GetOrderByIdUseCase {
@@ -9,6 +10,7 @@ export class GetOrderByIdUseCase {
     private readonly orderRepository: IOrderRepository,
     @Inject('IProductRepository')
     private readonly productRepository: IProductRepository,
+    private readonly getNotificationsUseCase: GetOrderNotificationsUseCase,
   ) {}
 
   async execute(tenantId: string, orderId: string) {
@@ -25,19 +27,33 @@ export class GetOrderByIdUseCase {
       quantity    = firstItem.quantity;
     }
 
+    const notifications = await this.getNotificationsUseCase.executeForOrder(orderId, tenantId);
+
     return {
-      id:         order.id.value,
-      reference:  order.externalReference,
-      clientName: order.customerName,
-      status:     order.status,
+      id:               order.id.value,
+      reference:        order.externalReference,
+      externalReference: order.externalReference,
+      clientName:       order.customerName,
+      customerName:     order.customerName,
+      status:           order.status,
       productName,
       quantity,
       items: order.items.map((i) => ({
         productId: i.productId.value,
         quantity:  i.quantity,
       })),
-      createdAt:  order.createdAt,
-      updatedAt:  order.updatedAt,
+      orderType:        (order as any).orderType       ?? null,
+      description:      (order as any).description     ?? null,
+      fechaConfeccion:  (order as any).fechaConfeccion ?? null,
+      fechaEntrega:     (order as any).fechaEntrega    ?? null,
+      horario:          (order as any).horario         ?? null,
+      comuna:           (order as any).comuna          ?? null,
+      color:            (order as any).color           ?? null,
+      mesVenta:         (order as any).mesVenta        ?? null,
+      extraData:        (order as any).extraData       ?? null,
+      notifications,
+      createdAt:        order.createdAt,
+      updatedAt:        order.updatedAt,
     };
   }
 }
