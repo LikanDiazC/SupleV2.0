@@ -1,7 +1,8 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import { IsString, IsNotEmpty, IsNumber, IsIn, IsOptional, Min } from 'class-validator';
 import type { IMaterialRepository } from '../../domain/repositories/IMaterialRepository';
-import { Material, MaterialType, GrainDirection } from '../../domain/entities/Material';
+import { Material } from '../../domain/entities/Material';
+import type { MaterialType, GrainDirection } from '../../domain/entities/Material';
 import { TenantId } from '../../../iam/domain/value-objects/TenantId';
 
 export class CreateMaterialDto {

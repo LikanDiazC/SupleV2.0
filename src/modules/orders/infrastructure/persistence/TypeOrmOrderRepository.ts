@@ -119,7 +119,7 @@ export class TypeOrmOrderRepository implements IOrderRepository {
     if ('mesVenta'        in fields) update.mesVenta        = fields.mesVenta        ?? null;
     if ('extraData'       in fields) update.extraData       = fields.extraData       ?? null;
     if (Object.keys(update).length > 0) {
-      await this.ormRepository.update({ id, tenantId }, update);
+      await this.ormRepository.update({ id, tenantId }, update as any);
     }
   }
 }
