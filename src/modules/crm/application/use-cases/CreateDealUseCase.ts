@@ -29,6 +29,9 @@ export class CreateDealDto {
   @IsOptional() @IsUUID()
   contactId?: string;
 
+  @IsOptional() @IsString()
+  dealType?: string;
+
   @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => CreateDealItemDto)
   items?: CreateDealItemDto[];
 }
@@ -49,6 +52,7 @@ export class CreateDealUseCase {
         companyId: dto.companyId ? new UniqueId(dto.companyId) : null,
         contactId: dto.contactId ? new UniqueId(dto.contactId) : null,
         assignedUserId: new UniqueId(userId),
+        dealType: dto.dealType ?? null,
         // 👇 Mapeamos el carrito si lo enviaron
         items: dto.items ? dto.items.map(i => ({
           bomId:    new UniqueId(i.bomId),

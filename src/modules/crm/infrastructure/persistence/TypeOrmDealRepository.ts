@@ -24,6 +24,7 @@ export class TypeOrmDealRepository implements IDealRepository {
       companyId: deal.companyId ? deal.companyId.value : null,
       contactId: deal.contactId ? deal.contactId.value : null,
       assignedUserId: deal.assignedUserId.value,
+      dealType: deal.dealType,
       // 👇 NUEVO: Transformamos los items al guardarlos
       items: deal.items.map(i => ({
         bomId:    i.bomId.value,
@@ -63,6 +64,7 @@ export class TypeOrmDealRepository implements IDealRepository {
       companyId: orm.companyId ? new UniqueId(orm.companyId) : null,
       contactId: orm.contactId ? new UniqueId(orm.contactId) : null,
       assignedUserId: new UniqueId(orm.assignedUserId),
+      dealType: orm.dealType,
       // 👇 NUEVO: Reconstruimos los items al sacarlos de la base de datos
       items: (orm.items || []).map((i: any) => ({
         bomId:    new UniqueId(i.bomId),

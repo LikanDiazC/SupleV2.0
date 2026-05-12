@@ -27,6 +27,9 @@ export class DealOrmEntity {
   @Column('uuid')
   assignedUserId!: string;
 
+  @Column('text', { nullable: true })
+  dealType!: string | null;
+
   @Column('jsonb', { default: [] })
   items!: any[];
 

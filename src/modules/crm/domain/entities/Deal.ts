@@ -16,7 +16,8 @@ export interface DealProps {
   stage: DealStage;
   companyId?: UniqueId | null; 
   contactId?: UniqueId | null; 
-  assignedUserId: UniqueId;    
+  assignedUserId: UniqueId;
+  dealType?: string | null;
   items: DealItem[]; // 👈 NUEVO: El "carrito de compras" del negocio
   createdAt: Date;
   updatedAt: Date;
@@ -32,7 +33,8 @@ export class Deal {
     return new Deal(id ?? new UniqueId(), {
       ...props,
       items: props.items || [], // Si no mandan productos, inicia vacío
-      stage: 'NUEVO', 
+      dealType: props.dealType ?? null,
+      stage: 'NUEVO',
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -50,6 +52,7 @@ export class Deal {
   get companyId() { return this._props.companyId; }
   get contactId() { return this._props.contactId; }
   get assignedUserId() { return this._props.assignedUserId; }
+  get dealType() { return this._props.dealType ?? null; }
   get items() { return this._props.items; } // 👈 NUEVO
   get createdAt() { return this._props.createdAt; }
   get updatedAt() { return this._props.updatedAt; }
