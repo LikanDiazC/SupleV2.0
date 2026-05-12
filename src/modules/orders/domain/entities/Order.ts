@@ -2,8 +2,9 @@ import { UniqueId } from '../../../../shared/kernel/UniqueId';
 import { TenantId } from '../../../iam/domain/value-objects/TenantId';
 
 // 👇 Estos son los Nodos de tu flujo de trabajo exacto
-export type OrderStatus = 
+export type OrderStatus =
   | 'ORDER_RECEIVED'       // 1. Entra desde Shopify/Falabella
+  | 'DESIGN_CONFIRMED'     // 1.5 Diseño confirmado por el cliente
   | 'CHECKING_STOCK'       // 2. Sistema revisando si hay madera
   | 'ON_HOLD_MATERIALS'    // 3. Faltó madera (esperando humano/compras)
   | 'READY_TO_START'       // 4. Hay madera, listo para que el carpintero inicie
@@ -58,8 +59,12 @@ export class Order {
   // ==========================================
 
   public markAsCheckingStock(): void {
-    if (this.props.status !== 'ORDER_RECEIVED' && this.props.status !== 'ON_HOLD_MATERIALS') {
-      throw new Error('Solo se puede revisar stock de órdenes nuevas o en espera.');
+    if (
+      this.props.status !== 'ORDER_RECEIVED' &&
+      this.props.status !== 'ON_HOLD_MATERIALS' &&
+      this.props.status !== 'DESIGN_CONFIRMED'
+    ) {
+      throw new Error('Solo se puede revisar stock de órdenes nuevas, en espera o con diseño confirmado.');
     }
     this.props.status = 'CHECKING_STOCK';
     this.updateTimestamp();
@@ -78,6 +83,14 @@ export class Order {
       throw new Error('Solo se puede marcar lista para iniciar tras validar el stock.');
     }
     this.props.status = 'READY_TO_START';
+    this.updateTimestamp();
+  }
+
+  public confirmDesign(): void {
+    if (this.props.status !== 'ORDER_RECEIVED') {
+      throw new Error('Solo se puede confirmar diseño de órdenes recién recibidas.');
+    }
+    this.props.status = 'DESIGN_CONFIRMED';
     this.updateTimestamp();
   }
 
