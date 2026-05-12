@@ -12,6 +12,6 @@ import { TenantConfigController } from './presentation/TenantConfigController';
     GetTenantConfigUseCase,
   ],
   controllers: [TenantConfigController],
-  exports: [GetTenantConfigUseCase],
+  exports: ['ITenantConfigRepository', GetTenantConfigUseCase],
 })
 export class TenantConfigModule {}
