@@ -21,6 +21,8 @@ export class TypeOrmTenantConfigRepository implements ITenantConfigRepository {
       row.orderStatuses,
       row.extraFields,
       row.notifSteps,
+      row.requireDesignConfirmation ?? false,
+      row.notifAutoTriggers ?? {},
     );
   }
 
@@ -32,7 +34,9 @@ export class TypeOrmTenantConfigRepository implements ITenantConfigRepository {
         COALESCE(tc."orderTypes",    '[]'::jsonb) AS "orderTypes",
         COALESCE(tc."orderStatuses", '[]'::jsonb) AS "orderStatuses",
         COALESCE(tc."extraFields",   '[]'::jsonb) AS "extraFields",
-        COALESCE(tc."notifSteps",    '[]'::jsonb) AS "notifSteps"
+        COALESCE(tc."notifSteps",    '[]'::jsonb) AS "notifSteps",
+        COALESCE(tc."requireDesignConfirmation", false) AS "requireDesignConfirmation",
+        COALESCE(tc."notifAutoTriggers", '{}'::jsonb) AS "notifAutoTriggers"
       FROM tenants t
       LEFT JOIN tenant_config tc ON tc."tenantId" = t.id
       ORDER BY t.name

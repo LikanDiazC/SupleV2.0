@@ -23,9 +23,11 @@ export class TenantConfig {
     public readonly orderStatuses: OrderStatusConfig[],
     public readonly extraFields: ExtraFieldConfig[],
     public readonly notifSteps: NotifStepConfig[],
+    public readonly requireDesignConfirmation: boolean = false,
+    public readonly notifAutoTriggers: Record<string, string[]> = {},
   ) {}
 
   static empty(tenantId: string): TenantConfig {
-    return new TenantConfig(tenantId, [], [], [], []);
+    return new TenantConfig(tenantId, [], [], [], [], false, {});
   }
 }

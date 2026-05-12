@@ -7,6 +7,8 @@ export interface TenantConfigWithName {
   orderStatuses: any[];
   extraFields: any[];
   notifSteps: any[];
+  requireDesignConfirmation: boolean;
+  notifAutoTriggers: Record<string, string[]>;
 }
 
 export interface ITenantConfigRepository {

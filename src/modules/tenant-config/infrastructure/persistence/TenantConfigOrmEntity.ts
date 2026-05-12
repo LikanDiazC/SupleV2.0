@@ -23,6 +23,12 @@ export class TenantConfigOrmEntity {
   @Column('jsonb', { default: [] })
   notifSteps!: any[];
 
+  @Column('boolean', { default: false })
+  requireDesignConfirmation!: boolean;
+
+  @Column('jsonb', { default: {} })
+  notifAutoTriggers!: Record<string, string[]>;
+
   @CreateDateColumn()
   createdAt!: Date;
 
