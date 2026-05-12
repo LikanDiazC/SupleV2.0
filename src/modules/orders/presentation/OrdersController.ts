@@ -14,6 +14,7 @@ import { GetOrdersUseCase } from '../application/use-cases/GetOrdersUseCase';
 import { GetOrderByIdUseCase } from '../application/use-cases/GetOrderByIdUseCase';
 import { UpdateOrderStatusUseCase, UpdateOrderStatusDto } from '../application/use-cases/UpdateOrderStatusUseCase';
 import { UpdateOrderFieldsUseCase, UpdateOrderFieldsDto } from '../application/use-cases/UpdateOrderFieldsUseCase';
+import { ConfirmOrderDesignUseCase } from '../application/use-cases/ConfirmOrderDesignUseCase';
 import { MarkNotificationStepUseCase } from '../../order-notifications/application/use-cases/MarkNotificationStepUseCase';
 import { UnmarkNotificationStepUseCase } from '../../order-notifications/application/use-cases/UnmarkNotificationStepUseCase';
 import { GetOrderNotificationsUseCase } from '../../order-notifications/application/use-cases/GetOrderNotificationsUseCase';
@@ -27,6 +28,7 @@ export class OrdersController {
     private readonly completeOrderProductionUseCase: CompleteOrderProductionUseCase,
     private readonly shipOrderUseCase: ShipOrderUseCase,
     private readonly deliverOrderUseCase: DeliverOrderUseCase,
+    private readonly confirmOrderDesignUseCase: ConfirmOrderDesignUseCase,
     private readonly getOrdersUseCase: GetOrdersUseCase,
     private readonly getOrderByIdUseCase: GetOrderByIdUseCase,
     private readonly updateOrderStatusUseCase: UpdateOrderStatusUseCase,
@@ -107,6 +109,15 @@ export class OrdersController {
     const userPayload = request['user'] as any;
     const newStatus = await this.deliverOrderUseCase.execute(userPayload.tenantId, orderId);
     return { message: '¡Misión cumplida! El cliente ha recibido su pedido. Ciclo finalizado.', status: newStatus };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/confirm-design')
+  async confirmDesign(@Param('id') orderId: string, @Req() request: Request) {
+    const userPayload = request['user'] as any;
+    const userId = userPayload.sub || userPayload.id;
+    const newStatus = await this.confirmOrderDesignUseCase.execute(userPayload.tenantId, orderId, userId);
+    return { message: 'Diseño confirmado. Stock verificado.', status: newStatus };
   }
 
   // ── Cercha fields update ─────────────────────────────────────────────────

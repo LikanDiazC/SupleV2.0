@@ -18,6 +18,7 @@ import { UpdateOrderFieldsUseCase } from './application/use-cases/UpdateOrderFie
 import { OrderNotificationsModule } from '../order-notifications/OrderNotificationsModule';
 import { TenantConfigModule } from '../tenant-config/TenantConfigModule';
 import { OrderStatusAutoNotifier } from './application/services/OrderStatusAutoNotifier';
+import { ConfirmOrderDesignUseCase } from './application/use-cases/ConfirmOrderDesignUseCase';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { OrderStatusAutoNotifier } from './application/services/OrderStatusAutoN
     UpdateOrderStatusUseCase,
     UpdateOrderFieldsUseCase,
     OrderStatusAutoNotifier,
+    ConfirmOrderDesignUseCase,
   ],
   controllers: [OrdersController],
   exports: ['IOrderRepository', CheckOrderStockUseCase, OrderStatusAutoNotifier],
