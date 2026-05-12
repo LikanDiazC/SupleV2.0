@@ -16,6 +16,8 @@ import { GetOrderByIdUseCase } from './application/use-cases/GetOrderByIdUseCase
 import { UpdateOrderStatusUseCase } from './application/use-cases/UpdateOrderStatusUseCase';
 import { UpdateOrderFieldsUseCase } from './application/use-cases/UpdateOrderFieldsUseCase';
 import { OrderNotificationsModule } from '../order-notifications/OrderNotificationsModule';
+import { TenantConfigModule } from '../tenant-config/TenantConfigModule';
+import { OrderStatusAutoNotifier } from './application/services/OrderStatusAutoNotifier';
 
 @Module({
   imports: [
@@ -23,6 +25,7 @@ import { OrderNotificationsModule } from '../order-notifications/OrderNotificati
     InventoryModule,
     ManufacturingModule,
     OrderNotificationsModule,
+    TenantConfigModule,
   ],
   providers: [
     { provide: 'IOrderRepository', useClass: TypeOrmOrderRepository },
@@ -36,8 +39,9 @@ import { OrderNotificationsModule } from '../order-notifications/OrderNotificati
     GetOrderByIdUseCase,
     UpdateOrderStatusUseCase,
     UpdateOrderFieldsUseCase,
+    OrderStatusAutoNotifier,
   ],
   controllers: [OrdersController],
-  exports: ['IOrderRepository', CheckOrderStockUseCase],
+  exports: ['IOrderRepository', CheckOrderStockUseCase, OrderStatusAutoNotifier],
 })
 export class OrdersModule {}
