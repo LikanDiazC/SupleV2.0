@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import type { IEmployeeRepository } from '../../domain/repositories/IEmployeeRepository';
 import type { ITaskRepository } from '../../domain/repositories/ITaskRepository';
 import { UniqueId } from '../../../../shared/kernel/UniqueId';
@@ -12,7 +12,7 @@ export class GetMyTasksUseCase {
 
   async execute(userId: string) {
     const employee = await this.employeeRepo.findByUserId(new UniqueId(userId));
-    if (!employee) throw new NotFoundException('Empleado no encontrado.');
+    if (!employee) return [];
 
     const tasks = await this.taskRepo.findByAssignedTo(new UniqueId(employee.id.value));
 

@@ -58,10 +58,7 @@ export class MarketplaceController {
   async getMyCart(@Req() req: Request) {
     const user = req['user'] as any;
     const cart = await this.getCart.execute(user.sub || user.id);
-    if (!cart) {
-      throw new NotFoundException('Cart not found');
-    }
-    return cart;
+    return cart ?? null;
   }
 
   @UseGuards(JwtAuthGuard)
