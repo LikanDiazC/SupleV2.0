@@ -13,6 +13,7 @@ import { Remnant } from '../../../inventory/domain/entities/Remnant';
 import { CuttingEngine } from '../../../manufacturing/domain/services/CuttingEngine';
 import { UniqueId } from '../../../../shared/kernel/UniqueId';
 import { TenantId } from '../../../iam/domain/value-objects/TenantId';
+import { OrderStatusAutoNotifier } from '../services/OrderStatusAutoNotifier';
 
 @Injectable()
 export class CompleteOrderProductionUseCase {
@@ -33,6 +34,7 @@ export class CompleteOrderProductionUseCase {
     private readonly cuttingPlanRepository: ICuttingPlanRepository,
     @Inject('IRemnantRepository')
     private readonly remnantRepository: IRemnantRepository,
+    private readonly autoNotifier: OrderStatusAutoNotifier,
   ) {}
 
   async execute(tenantId: string, orderId: string, userId: string): Promise<string> {
@@ -139,6 +141,7 @@ export class CompleteOrderProductionUseCase {
       }
 
       await this.orderRepository.updateStatus(order.id.value, tenantId, order.status);
+      await this.autoNotifier.markFor(tenantId, orderId, 'MANUFACTURED', userId);
       return order.status;
 
     } catch (error: any) {

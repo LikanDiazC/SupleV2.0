@@ -99,7 +99,8 @@ export class OrdersController {
   @Patch(':id/ship')
   async shipOrder(@Param('id') orderId: string, @Req() request: Request) {
     const userPayload = request['user'] as any;
-    const newStatus = await this.shipOrderUseCase.execute(userPayload.tenantId, orderId);
+    const userId = userPayload.sub || userPayload.id;
+    const newStatus = await this.shipOrderUseCase.execute(userPayload.tenantId, orderId, userId);
     return { message: '¡El paquete está en camino! La orden ha sido enviada.', status: newStatus };
   }
 

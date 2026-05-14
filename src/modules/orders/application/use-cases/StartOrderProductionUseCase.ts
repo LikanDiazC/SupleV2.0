@@ -9,6 +9,7 @@ import { InventoryMovement } from '../../../inventory/domain/entities/InventoryM
 import { UniqueId } from '../../../../shared/kernel/UniqueId';
 import { TenantId } from '../../../iam/domain/value-objects/TenantId';
 import { CuttingEngine, PieceInput } from '../../../manufacturing/domain/services/CuttingEngine';
+import { OrderStatusAutoNotifier } from '../services/OrderStatusAutoNotifier';
 
 interface MaterialAccumulator {
   material: Material;
@@ -30,6 +31,7 @@ export class StartOrderProductionUseCase {
     private readonly bomRepository: IBillOfMaterialsRepository,
     @Inject('IInventoryMovementRepository')
     private readonly movementRepository: IInventoryMovementRepository,
+    private readonly autoNotifier: OrderStatusAutoNotifier,
   ) {}
 
   async execute(tenantId: string, orderId: string, userId: string): Promise<string> {
@@ -113,6 +115,7 @@ export class StartOrderProductionUseCase {
       }
 
       await this.orderRepository.updateStatus(order.id.value, tenantId, order.status);
+      await this.autoNotifier.markFor(tenantId, orderId, 'IN_PRODUCTION', userId);
       return order.status;
 
     } catch (error: any) {
