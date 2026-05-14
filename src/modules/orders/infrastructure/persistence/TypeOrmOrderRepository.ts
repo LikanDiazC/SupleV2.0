@@ -21,6 +21,7 @@ export class TypeOrmOrderRepository implements IOrderRepository {
       externalReference: order.externalReference,
       customerName: order.customerName,
       status: order.status,
+      orderType: (order as any).orderType ?? null,
       items: order.items.map(i => ({
         productId: i.productId.value,
         quantity: i.quantity,

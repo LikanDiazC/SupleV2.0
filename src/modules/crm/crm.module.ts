@@ -26,17 +26,19 @@ import { CrmController } from './presentation/CrmController';
 import { DealsController } from './presentation/DealsController';
 import { OrdersModule } from '../orders/orders.module';
 import { ManufacturingModule } from '../manufacturing/manufacturing.module';
+import { TenantConfigModule } from '../tenant-config/TenantConfigModule';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      CompanyOrmEntity, 
-      ContactOrmEntity, 
-      DealOrmEntity,          
-      DealActivityOrmEntity   
-    ]), 
+      CompanyOrmEntity,
+      ContactOrmEntity,
+      DealOrmEntity,
+      DealActivityOrmEntity
+    ]),
     OrdersModule,
     ManufacturingModule,
+    TenantConfigModule,
   ],
   controllers: [CrmController, DealsController],
   providers: [
