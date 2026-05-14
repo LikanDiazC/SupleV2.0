@@ -3,6 +3,9 @@ import type { Request } from 'express';
 import { JwtAuthGuard } from '../../iam/infrastructure/guards/JwtAuthGuard';
 import { GetTenantConfigUseCase } from '../application/use-cases/GetTenantConfigUseCase';
 
+const PLATFORM_ADMIN_TENANT_ID =
+  process.env.PLATFORM_ADMIN_TENANT_ID ?? 'f401e1fc-2f08-4e21-849d-e7f70af37132';
+
 @Controller('tenant')
 export class TenantConfigController {
   constructor(private readonly getTenantConfigUseCase: GetTenantConfigUseCase) {}
@@ -22,7 +25,10 @@ export class TenantConfigController {
 
   @UseGuards(JwtAuthGuard)
   @Get('configs')
-  async getAllConfigs() {
-    return this.getTenantConfigUseCase.executeAll();
+  async getAllConfigs(@Req() req: Request) {
+    const { tenantId } = req['user'] as any;
+    const all = await this.getTenantConfigUseCase.executeAll();
+    if (tenantId === PLATFORM_ADMIN_TENANT_ID) return all;
+    return all.filter(t => t.tenantId === tenantId);
   }
 }
